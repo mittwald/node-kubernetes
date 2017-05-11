@@ -1,0 +1,41 @@
+{
+  "name": "@mittwald/kubernetes",
+  "version": "1.0.0",
+  "description": "Kubernetes client library",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "jest --verbose -w 1",
+    "compile": "tsc -p tsconfig.build.json",
+    "lint": "tslint --project tsconfig.json",
+    "lint-fix": "tslint --project tsconfig.json --fix"
+  },
+  "author": "Martin Helmich <m.helmich@mittwald.de>",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@types/request": "^0.0.43",
+    "@types/yamljs": "^0.2.30",
+    "request": "^2.81.0",
+    "yamljs": "^0.2.10"
+  },
+  "devDependencies": {
+    "jest": "^19.0.2",
+    "ts-jest": "^19.0.8",
+    "tslint": "^5.2.0",
+    "typescript": "^2.3.2"
+  },
+  "jest": {
+    "globals": {
+      "__TS_CONFIG__": "tsconfig.base.json"
+    },
+    "testEnvironment": "node",
+    "transform": {
+      ".(ts|tsx)": "<rootDir>/node_modules/ts-jest/preprocessor.js"
+    },
+    "testRegex": "/tests/.*test.*$",
+    "moduleFileExtensions": [
+      "js",
+      "ts",
+      "tsx"
+    ]
+  }
+}

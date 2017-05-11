@@ -1,0 +1,42 @@
+before_script:
+  - |
+    if which npm ; then
+      cat <<EOT >> ~/.npmrc
+      registry=https://registry.npmjs.org/
+      @types:registry=https://registry.npmjs.org/
+      @hyperspace-contracts:registry=https://npm.mittwald.it/
+      @hyperspace:registry=https://npm.mittwald.it/
+      //npm.mittwald.it/:_authToken="${NPM_TOKEN}"
+      EOT
+      yarn install
+      git config user.email gitlab@spaces.de
+      git config user.name "Gitlab CI"
+    fi
+
+cache:
+  paths:
+    - node_modules/
+
+typescript-compile:
+  image: kkarczmarczyk/node-yarn:6.9
+  stage: build
+  script:
+    - yarn compile
+
+tslint:
+  image: kkarczmarczyk/node-yarn:6.9
+  stage: test
+  script:
+    - yarn lint
+
+registry-publish:
+  stage: deploy
+  image: kkarczmarczyk/node-yarn:6.9
+  script:
+    - npm version from-git
+    - yarn compile
+    - cp package.json dist/
+    - cd dist/
+    - npm publish
+  only:
+    - tags

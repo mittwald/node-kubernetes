@@ -6,6 +6,7 @@ before_script:
       @types:registry=https://registry.npmjs.org/
       @hyperspace-contracts:registry=https://npm.mittwald.it/
       @hyperspace:registry=https://npm.mittwald.it/
+      @mittwald:registry=https://npm.mittwald.it/
       //npm.mittwald.it/:_authToken="${NPM_TOKEN}"
       EOT
       yarn install

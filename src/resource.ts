@@ -1,5 +1,6 @@
-import {KubernetesRESTClient, LabelSelector} from "./client";
+import {KubernetesRESTClient} from "./client";
 import {APIObject, MetadataObject} from "./types/meta";
+import {LabelSelector} from "./label";
 
 export class ResourceClient<R extends MetadataObject, K, V> {
 

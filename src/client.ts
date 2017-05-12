@@ -6,6 +6,8 @@ import {isStatus} from "./types";
 import {PersistentVolume} from "./types/persistentvolume";
 import {LabelSelector, labelSelectorToQueryString} from "./label";
 
+export type RequestMethod = "GET"|"POST"|"PUT"|"PATCH"|"DELETE";
+
 export class KubernetesAPI {
 
     public constructor(private restClient: KubernetesRESTClient) {}
@@ -23,7 +25,7 @@ export class KubernetesRESTClient {
 
     public constructor(private config: IKubernetesClientConfig) {}
 
-    private request<R = any>(url: string, body?: any, method: string = "POST", additionalOptions: request.CoreOptions = {}): Promise<R> {
+    private request<R = any>(url: string, body?: any, method: RequestMethod = "POST", additionalOptions: request.CoreOptions = {}): Promise<R> {
         url = url.replace(/^\//, "");
         const absoluteURL = this.config.apiServerURL + "/" + url;
 

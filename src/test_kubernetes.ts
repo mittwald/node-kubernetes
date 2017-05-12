@@ -8,18 +8,20 @@ const api = new KubernetesAPI(client);
 (async () => {
     //const pods = await api.pods().namespace("kube-system").list();
     //pods.forEach(pod => console.log(pod.metadata.name));
+    //
+    // await api.persistentVolumes().apply({
+    //     metadata: {
+    //         name: "test"
+    //     },
+    //     spec: {
+    //         accessModes: ["ReadWriteOnce"],
+    //         capacity: {storage: "5Gi"},
+    //         hostPath: {
+    //             path: "/foo"
+    //         }
+    //     }
+    // });
 
-    await api.persistentVolumes().apply({
-        metadata: {
-            name: "test"
-        },
-        spec: {
-            accessModes: ["ReadWriteOnce"],
-            capacity: {storage: "5Gi"},
-            hostPath: {
-                path: "/foo"
-            }
-        }
-    });
+    await api.persistentVolumes().delete("test");
 
 })().catch(console.error);

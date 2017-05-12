@@ -1,5 +1,6 @@
-import {KubernetesRESTClient, LabelSelector} from "./client";
+import {KubernetesRESTClient} from "./client";
 import {APIObject, MetadataObject} from "./types/meta";
+import {LabelSelector} from "./label";
 
 export class ResourceClient<R extends MetadataObject, K, V> {
 
@@ -38,15 +39,26 @@ export class ResourceClient<R extends MetadataObject, K, V> {
     }
 
     public async put(resource: R): Promise<APIObject<K, V> & R> {
-        const response = await this.client.put(this.urlForResource(resource), resource);
-        console.log(response);
-        return response;
+        return await this.client.put(this.urlForResource(resource), resource);
     }
 
     public async post(resource: R): Promise<APIObject<K, V> & R> {
-        const response = await this.client.post(this.baseURL, resource);
-        console.log(response);
-        return response;
+        return await this.client.post(this.baseURL, resource);
+    }
+
+    public async delete(resourceOrName: R|string): Promise<void> {
+        let url;
+        if (typeof resourceOrName === "string") {
+            url = this.baseURL + "/" + resourceOrName;
+        } else {
+            url = this.urlForResource(resourceOrName);
+        }
+
+        return await this.client.delete(url);
+    }
+
+    public async deleteMany(labelSelector: LabelSelector) {
+        return await this.client.delete(this.baseURL, labelSelector);
     }
 
 }

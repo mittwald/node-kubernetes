@@ -30,6 +30,12 @@ tslint:
   script:
     - yarn lint
 
+jest:
+  image: kkarczmarczyk/node-yarn:6.9
+  stage: test
+  script:
+    - yarn test
+
 registry-publish:
   stage: deploy
   image: kkarczmarczyk/node-yarn:6.9

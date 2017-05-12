@@ -1,4 +1,4 @@
-import {APIObject, MetadataObject, ResourceList} from "./meta";
+import {MetadataObject, ResourceList} from "./meta";
 
 export type AccessMode = "ReadWriteOnce"|"ReadOnlyMany"|"ReadWriteMany";
 

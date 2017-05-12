@@ -4,8 +4,7 @@ import {NamespacedResourceClient, ResourceClient} from "./resource";
 import {Pod} from "./types/pod";
 import {isStatus} from "./types";
 import {PersistentVolume} from "./types/persistentvolume";
-
-export type LabelSelector = {[l: string]: string};
+import {LabelSelector, labelSelectorToQueryString} from "./label";
 
 export class KubernetesAPI {
 
@@ -70,7 +69,7 @@ export class KubernetesRESTClient {
         const opts: request.CoreOptions = {};
 
         if (labelSelector) {
-            opts.qs = {labelSelector: labelSelector};
+            opts.qs = {labelSelector: labelSelectorToQueryString(labelSelector)};
         }
 
         return this.request<R>(url, undefined, "DELETE", opts);
@@ -87,7 +86,7 @@ export class KubernetesRESTClient {
             };
 
             if (labelSelector) {
-                opts.qs["labelSelector"] = labelSelector;
+                opts.qs["labelSelector"] = labelSelectorToQueryString(labelSelector);
             }
 
             opts = this.config.mapRequestOptions(opts);

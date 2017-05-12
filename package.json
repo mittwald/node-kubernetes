@@ -13,12 +13,15 @@
   "author": "Martin Helmich <m.helmich@mittwald.de>",
   "license": "UNLICENSED",
   "dependencies": {
+    "@types/lodash": "^4.14.64",
     "@types/request": "^0.0.43",
     "@types/yamljs": "^0.2.30",
+    "lodash": "^4.17.4",
     "request": "^2.81.0",
     "yamljs": "^0.2.10"
   },
   "devDependencies": {
+    "@types/jest": "^19.2.3",
     "jest": "^19.0.2",
     "ts-jest": "^19.0.8",
     "tslint": "^5.2.0",

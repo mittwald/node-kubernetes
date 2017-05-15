@@ -21,7 +21,7 @@ export class ResourceClient<R extends MetadataObject, K, V> {
 
     public async list(labelSelector?: LabelSelector): Promise<(APIObject<K, V> & R)[]> {
         const list = await this.client.get(this.baseURL, labelSelector);
-        return list.items;
+        return list.items || [];
     }
 
     public async get(name: string): Promise<(APIObject<K, V> & R) | undefined> {

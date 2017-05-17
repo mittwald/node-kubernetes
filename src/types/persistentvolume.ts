@@ -1,4 +1,5 @@
-import {MetadataObject, ResourceList} from "./meta";
+import {LabelSelector, MetadataObject, ObjectMeta, ResourceList} from "./meta";
+import {ResourceRequirements} from "./container";
 
 export type AccessMode = "ReadWriteOnce"|"ReadOnlyMany"|"ReadWriteMany";
 
@@ -47,3 +48,16 @@ export type PersistentVolume = MetadataObject & {
 };
 
 export type PersistentVolumeList = ResourceList<PersistentVolume, "PersistentVolume", "v1">;
+
+export interface PersistentVolumeClaimSpec {
+    accessModes: AccessMode[];
+    resources: ResourceRequirements;
+    selector?: LabelSelector;
+    storageClassName?: string;
+    volumeName?: string;
+}
+
+export interface PersistentVolumeClaim<M = ObjectMeta> {
+    metadata: M;
+    spec: PersistentVolumeClaimSpec;
+}

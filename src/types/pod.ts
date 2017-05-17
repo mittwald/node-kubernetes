@@ -74,6 +74,6 @@ export interface PodSpec {
 }
 
 export interface PodTemplateSpec {
-    metadata: ObjectMeta;
+    metadata: Partial<ObjectMeta>;
     spec: PodSpec;
 }

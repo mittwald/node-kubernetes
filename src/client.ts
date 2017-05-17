@@ -7,6 +7,7 @@ import {PersistentVolume} from "./types/persistentvolume";
 import {LabelSelector, labelSelectorToQueryString} from "./label";
 import {Deployment} from "./types/deployment";
 import {Service} from "./types/service";
+import {StatefulSet} from "./types/statefulset";
 
 export type RequestMethod = "GET"|"POST"|"PUT"|"PATCH"|"DELETE";
 
@@ -28,6 +29,10 @@ export class KubernetesAPI {
 
     public services(): NamespacedResourceClient<Service, "Service", "v1"> {
         return new NamespacedResourceClient(this.restClient, "/api/v1", "/services");
+    }
+
+    public statefulSets(): NamespacedResourceClient<StatefulSet, "StatefulSet", "apps/v1beta1"> {
+        return new NamespacedResourceClient(this.restClient, "/apis/apps/v1beta1", "/statefulsets");
     }
 }
 

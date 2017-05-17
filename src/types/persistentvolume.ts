@@ -44,6 +44,6 @@ export type PersistentVolumeSpec = PersistentVolumeSpecBase & PersistentVolumeSo
 
 export type PersistentVolume = MetadataObject & {
     spec: PersistentVolumeSpec;
-}
+};
 
 export type PersistentVolumeList = ResourceList<PersistentVolume, "PersistentVolume", "v1">;

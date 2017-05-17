@@ -26,7 +26,7 @@ export interface User {
         "password"?: string;
         "username"?: string;
         "token"?: string;
-    }
+    };
 }
 
 export interface Config {

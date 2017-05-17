@@ -10,7 +10,7 @@ export interface DeploymentStrategy {
     rollingUpdate?: {
         maxSurge: number|string;
         maxUnavailable: number|string;
-    }
+    };
 }
 
 export interface DeploymentSpec {
@@ -26,8 +26,8 @@ export interface DeploymentSpec {
 }
 
 export interface Deployment {
-    apiVersion: "extensions/v1beta1",
-    kind: "Deployment",
-    metadata: ObjectMeta,
-    spec: DeploymentSpec
+    apiVersion: "extensions/v1beta1";
+    kind: "Deployment";
+    metadata: ObjectMeta;
+    spec: DeploymentSpec;
 }

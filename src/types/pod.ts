@@ -4,10 +4,10 @@ import {Container, SELinuxOptions} from "./container";
 import {PersistentVolumeSource} from "./persistentvolume";
 
 export interface Pod {
-    apiVersion: "v1",
-    kind: "Pod",
-    metadata: ObjectMeta,
-    spec: PodSpec,
+    apiVersion: "v1";
+    kind: "Pod";
+    metadata: ObjectMeta;
+    spec: PodSpec;
 }
 
 export interface PodSecurityContext {
@@ -62,7 +62,7 @@ export interface PodSpec {
     imagePullSecrets?: LocalObjectReference[];
     initContainers?: Container[];
     nodeName?: string;
-    nodeSelector?: {[label:string]: string};
+    nodeSelector?: {[label: string]: string};
     restartPolicy?: "Always"|"OnFailure"|"Never";
     schedulerName?: string;
     securityContext?: PodSecurityContext;
@@ -74,6 +74,6 @@ export interface PodSpec {
 }
 
 export interface PodTemplateSpec {
-    metadata: ObjectMeta,
-    spec: PodSpec,
+    metadata: ObjectMeta;
+    spec: PodSpec;
 }

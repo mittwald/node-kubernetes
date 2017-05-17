@@ -74,7 +74,7 @@ export type Probe = {
     periodSeconds?: number;
     successThreshold?: number;
     timeoutSeconds?: number;
-} & ({exec: ExecAction} | {httpGet: HTTPGetAction} | {tcpSocket: TCPSocketAction})
+} & ({exec: ExecAction} | {httpGet: HTTPGetAction} | {tcpSocket: TCPSocketAction});
 
 export interface ContainerPort {
     containerPort: number;

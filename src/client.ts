@@ -36,7 +36,7 @@ export class KubernetesRESTClient {
 
         return new Promise((res, rej) => {
             let opts: request.Options = {
-                method: method,
+                method,
                 url: absoluteURL,
                 json: true,
             };
@@ -48,18 +48,18 @@ export class KubernetesRESTClient {
             opts = this.config.mapRequestOptions(opts);
             opts = {...opts, ...additionalOptions};
 
-            request(opts, (err, response, body) => {
+            request(opts, (err, response, responseBody) => {
                 if (err) {
                     rej(err);
                     return;
                 }
 
-                if (isStatus(body) && body.status === "Failure") {
-                    rej(new Error(body.message));
+                if (isStatus(responseBody) && responseBody.status === "Failure") {
+                    rej(new Error(responseBody.message));
                     return;
                 }
 
-                res(body);
+                res(responseBody);
             });
         });
     }
@@ -93,7 +93,7 @@ export class KubernetesRESTClient {
             };
 
             if (labelSelector) {
-                opts.qs["labelSelector"] = labelSelectorToQueryString(labelSelector);
+                opts.qs.labelSelector = labelSelectorToQueryString(labelSelector);
             }
 
             opts = this.config.mapRequestOptions(opts);

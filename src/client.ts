@@ -3,11 +3,14 @@ import {IKubernetesClientConfig} from "./config";
 import {NamespacedResourceClient, ResourceClient} from "./resource";
 import {Pod} from "./types/pod";
 import {isStatus} from "./types";
-import {PersistentVolume} from "./types/persistentvolume";
+import {PersistentVolume, PersistentVolumeClaim} from "./types/persistentvolume";
 import {LabelSelector, labelSelectorToQueryString} from "./label";
 import {Deployment} from "./types/deployment";
 import {Service} from "./types/service";
 import {StatefulSet} from "./types/statefulset";
+import {Secret} from "./types/secret";
+import {ConfigMap} from "./types/configmap";
+import {Ingress} from "./types/ingress";
 
 export type RequestMethod = "GET"|"POST"|"PUT"|"PATCH"|"DELETE";
 
@@ -19,12 +22,24 @@ export class KubernetesAPI {
         return new NamespacedResourceClient(this.restClient, "/api/v1", "/pods");
     }
 
-    public persistentVolumes(): ResourceClient<PersistentVolume, "PersistentVolume", "v1"> {
-        return new ResourceClient(this.restClient, "/api/v1", "/persistentvolumes");
+    public configMaps(): NamespacedResourceClient<ConfigMap, "ConfigMap", "v1"> {
+        return new NamespacedResourceClient(this.restClient, "/api/v1", "/configmaps");
     }
 
     public deployments(): NamespacedResourceClient<Deployment, "Deployment", "extensions/v1beta1"> {
         return new NamespacedResourceClient(this.restClient, "/apis/extensions/v1beta1", "/deployments");
+    }
+
+    public ingresses(): NamespacedResourceClient<Ingress, "Ingress", "extensions/v1beta1"> {
+        return new NamespacedResourceClient(this.restClient, "/apis/extensions/v1beta1", "/ingresses");
+    }
+
+    public persistentVolumes(): ResourceClient<PersistentVolume, "PersistentVolume", "v1"> {
+        return new ResourceClient(this.restClient, "/api/v1", "/persistentvolumes");
+    }
+
+    public persistentVolumeClaims(): ResourceClient<PersistentVolumeClaim, "PersistentVolumeClaim", "v1"> {
+        return new NamespacedResourceClient(this.restClient, "/api/v1", "/persistentvolumeclaims");
     }
 
     public services(): NamespacedResourceClient<Service, "Service", "v1"> {
@@ -33,6 +48,10 @@ export class KubernetesAPI {
 
     public statefulSets(): NamespacedResourceClient<StatefulSet, "StatefulSet", "apps/v1beta1"> {
         return new NamespacedResourceClient(this.restClient, "/apis/apps/v1beta1", "/statefulsets");
+    }
+
+    public secrets(): NamespacedResourceClient<Secret, "Secret", "v1"> {
+        return new NamespacedResourceClient(this.restClient, "/api/v1", "/secrets");
     }
 }
 

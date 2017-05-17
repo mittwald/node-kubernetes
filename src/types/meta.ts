@@ -49,3 +49,11 @@ export interface APIResourceList {
         shortNames?: string[];
     }[]
 }
+
+export interface LabelSelector {
+    matchLabels?: {[l: string]: string};
+}
+
+export interface LocalObjectReference {
+    name: string;
+}

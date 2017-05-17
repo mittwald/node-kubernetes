@@ -22,6 +22,7 @@ const api = new KubernetesAPI(client);
     //     }
     // });
 
-    await api.persistentVolumes().delete("test");
+    const deployments = await api.deployments().namespace("hyperspace").list();
+    console.log(deployments);
 
 })().catch(console.error);

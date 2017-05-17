@@ -5,6 +5,7 @@ import {Pod} from "./types/pod";
 import {isStatus} from "./types";
 import {PersistentVolume} from "./types/persistentvolume";
 import {LabelSelector, labelSelectorToQueryString} from "./label";
+import {Deployment} from "./types/deployment";
 
 export type RequestMethod = "GET"|"POST"|"PUT"|"PATCH"|"DELETE";
 
@@ -18,6 +19,10 @@ export class KubernetesAPI {
 
     public persistentVolumes(): ResourceClient<PersistentVolume, "PersistentVolume", "v1"> {
         return new ResourceClient(this.restClient, "/api/v1", "/persistentvolumes");
+    }
+
+    public deployments(): NamespacedResourceClient<Deployment, "Deployment", "extensions/v1beta1"> {
+        return new NamespacedResourceClient(this.restClient, "/apis/extensions/v1beta1", "/deployments");
     }
 }
 

@@ -34,12 +34,13 @@ export interface QuobyteVolumeSource {
     volume: string;
 }
 
-export type PersistentVolumeSpec = PersistentVolumeSpecBase & (
+export type PersistentVolumeSource =
     {awsElasticBlockStore: AWSElasticBlockStoreVolumeSource} |
     {hostPath: HostPathVolumeSource} |
     {nfs: NFSVolumeSource} |
-    {quobyte: QuobyteVolumeSource}
-);
+    {quobyte: QuobyteVolumeSource};
+
+export type PersistentVolumeSpec = PersistentVolumeSpecBase & PersistentVolumeSource;
 
 export type PersistentVolume = MetadataObject & {
     spec: PersistentVolumeSpec;

@@ -12,7 +12,7 @@ export interface Resource<K = string, V = "v1"> {
 
 export type ResourceList<R, K = string, V = "v1"> = Resource<K, V> & { items: null | R[] };
 
-export type MetadataObject = { metadata: ObjectMeta };
+export interface MetadataObject { metadata: ObjectMeta; }
 export type APIObject<K = string, V = "v1"> = Resource<K, V> & MetadataObject;
 export type InputAPIObject<K = string, V = "v1"> = Partial<Resource<K, V>> & MetadataObject;
 
@@ -32,20 +32,28 @@ export type Status = Resource<"Status", "v1"> & {
         "InternalError";
     details: any;
     code: number;
-}
+};
 
 export function isStatus(s: { kind: string }): s is Status {
-    return "kind" in s && s["kind"] == "Status";
+    return "kind" in s && s.kind === "Status";
 }
 
 export interface APIResourceList {
     kind: "APIResourceList";
     groupVersion: string;
-    resources: {
+    resources: Array<{
         name: string;
         namespaced: boolean;
         kind: string;
         verbs: string[];
         shortNames?: string[];
-    }[]
+    }>;
+}
+
+export interface LabelSelector {
+    matchLabels?: {[l: string]: string};
+}
+
+export interface LocalObjectReference {
+    name: string;
 }

@@ -26,7 +26,7 @@ export class GenericClientConfig implements IKubernetesClientConfig {
         this.namespace = context.context.namespace || "default";
     }
 
-    mapRequestOptions(opts: request.Options): request.Options {
+    public mapRequestOptions(opts: request.Options): request.Options {
         const context = this.kubeconfig.contexts.find(c => c.name === this.kubeconfig["current-context"])!;
         const cluster = this.kubeconfig.clusters.find(c => c.name === context.context.cluster)!;
         const user = this.kubeconfig.users.find(c => c.name === context.context.user)!;
@@ -46,7 +46,7 @@ export class GenericClientConfig implements IKubernetesClientConfig {
         }
 
         if (user.user.token) {
-            opts.headers["Authorization"] = "Bearer " + user.user.token;
+            opts.headers.Authorization = "Bearer " + user.user.token;
         }
 
         const clientCert = user.user["client-certificate-data"];
@@ -89,29 +89,28 @@ export class FileBasedConfig extends GenericClientConfig {
 export class InClusterConfig extends GenericClientConfig {
     public constructor(namespace?: string) {
         const kubeconfig: Config = {
-            apiVersion: "v1",
-            clusters: [{
+            "apiVersion": "v1",
+            "clusters": [{
                 name: "local",
                 cluster: {
                     "certificate-authority": "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt",
-                    "server": "kubernetes.default"
-                }
+                    "server": "kubernetes.default",
+                },
             }],
-            users: [{
+            "users": [{
                 name: "serviceaccount",
                 user: {
-                    token: fs.readFileSync("/var/run/secrets/kubernetes.io/serviceaccount/token", "utf-8")
-                }
+                    token: fs.readFileSync("/var/run/secrets/kubernetes.io/serviceaccount/token", "utf-8"),
+                },
             }],
-            contexts: [{
+            "contexts": [{
                 name: "local",
-                context: {cluster: "local", user: "serviceaccount", namespace: namespace || "default"}
+                context: {cluster: "local", user: "serviceaccount", namespace: namespace || "default"},
             }],
-            "current-context": "local"
+            "current-context": "local",
         };
 
         super(kubeconfig);
     }
-
 
 }

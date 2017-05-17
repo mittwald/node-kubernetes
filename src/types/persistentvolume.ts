@@ -1,4 +1,5 @@
-import {MetadataObject, ResourceList} from "./meta";
+import {LabelSelector, MetadataObject, ObjectMeta, ResourceList} from "./meta";
+import {ResourceRequirements} from "./container";
 
 export type AccessMode = "ReadWriteOnce"|"ReadOnlyMany"|"ReadWriteMany";
 
@@ -34,15 +35,29 @@ export interface QuobyteVolumeSource {
     volume: string;
 }
 
-export type PersistentVolumeSpec = PersistentVolumeSpecBase & (
+export type PersistentVolumeSource =
     {awsElasticBlockStore: AWSElasticBlockStoreVolumeSource} |
     {hostPath: HostPathVolumeSource} |
     {nfs: NFSVolumeSource} |
-    {quobyte: QuobyteVolumeSource}
-);
+    {quobyte: QuobyteVolumeSource};
+
+export type PersistentVolumeSpec = PersistentVolumeSpecBase & PersistentVolumeSource;
 
 export type PersistentVolume = MetadataObject & {
     spec: PersistentVolumeSpec;
-}
+};
 
 export type PersistentVolumeList = ResourceList<PersistentVolume, "PersistentVolume", "v1">;
+
+export interface PersistentVolumeClaimSpec {
+    accessModes: AccessMode[];
+    resources: ResourceRequirements;
+    selector?: LabelSelector;
+    storageClassName?: string;
+    volumeName?: string;
+}
+
+export interface PersistentVolumeClaim<M = ObjectMeta> {
+    metadata: M;
+    spec: PersistentVolumeClaimSpec;
+}

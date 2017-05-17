@@ -1,6 +1,7 @@
 /node_modules/
 /.idea/
 /.vscode/
+/tests_compile_out/
 dist
 npm-debug.log
 yarn-error.log

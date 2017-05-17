@@ -5,6 +5,9 @@ import {Pod} from "./types/pod";
 import {isStatus} from "./types";
 import {PersistentVolume} from "./types/persistentvolume";
 import {LabelSelector, labelSelectorToQueryString} from "./label";
+import {Deployment} from "./types/deployment";
+import {Service} from "./types/service";
+import {StatefulSet} from "./types/statefulset";
 
 export type RequestMethod = "GET"|"POST"|"PUT"|"PATCH"|"DELETE";
 
@@ -19,6 +22,18 @@ export class KubernetesAPI {
     public persistentVolumes(): ResourceClient<PersistentVolume, "PersistentVolume", "v1"> {
         return new ResourceClient(this.restClient, "/api/v1", "/persistentvolumes");
     }
+
+    public deployments(): NamespacedResourceClient<Deployment, "Deployment", "extensions/v1beta1"> {
+        return new NamespacedResourceClient(this.restClient, "/apis/extensions/v1beta1", "/deployments");
+    }
+
+    public services(): NamespacedResourceClient<Service, "Service", "v1"> {
+        return new NamespacedResourceClient(this.restClient, "/api/v1", "/services");
+    }
+
+    public statefulSets(): NamespacedResourceClient<StatefulSet, "StatefulSet", "apps/v1beta1"> {
+        return new NamespacedResourceClient(this.restClient, "/apis/apps/v1beta1", "/statefulsets");
+    }
 }
 
 export class KubernetesRESTClient {
@@ -31,7 +46,7 @@ export class KubernetesRESTClient {
 
         return new Promise((res, rej) => {
             let opts: request.Options = {
-                method: method,
+                method,
                 url: absoluteURL,
                 json: true,
             };
@@ -43,18 +58,18 @@ export class KubernetesRESTClient {
             opts = this.config.mapRequestOptions(opts);
             opts = {...opts, ...additionalOptions};
 
-            request(opts, (err, response, body) => {
+            request(opts, (err, response, responseBody) => {
                 if (err) {
                     rej(err);
                     return;
                 }
 
-                if (isStatus(body) && body.status === "Failure") {
-                    rej(new Error(body.message));
+                if (isStatus(responseBody) && responseBody.status === "Failure") {
+                    rej(new Error(responseBody.message));
                     return;
                 }
 
-                res(body);
+                res(responseBody);
             });
         });
     }
@@ -88,7 +103,7 @@ export class KubernetesRESTClient {
             };
 
             if (labelSelector) {
-                opts.qs["labelSelector"] = labelSelectorToQueryString(labelSelector);
+                opts.qs.labelSelector = labelSelectorToQueryString(labelSelector);
             }
 
             opts = this.config.mapRequestOptions(opts);

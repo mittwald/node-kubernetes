@@ -6,8 +6,8 @@ const client = new KubernetesRESTClient(config);
 const api = new KubernetesAPI(client);
 
 (async () => {
-    //const pods = await api.pods().namespace("kube-system").list();
-    //pods.forEach(pod => console.log(pod.metadata.name));
+    // const pods = await api.pods().namespace("kube-system").list();
+    // pods.forEach(pod => console.log(pod.metadata.name));
     //
     // await api.persistentVolumes().apply({
     //     metadata: {
@@ -21,7 +21,8 @@ const api = new KubernetesAPI(client);
     //         }
     //     }
     // });
-
-    await api.persistentVolumes().delete("test");
+    //
+    // const deployments = await api.deployments().namespace("hyperspace").list();
+    // console.log(deployments);
 
 })().catch(console.error);

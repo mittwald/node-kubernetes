@@ -19,7 +19,7 @@ export class ResourceClient<R extends MetadataObject, K, V> {
         return this.baseURL + "/" + r.metadata.name;
     }
 
-    public async list(labelSelector?: LabelSelector): Promise<(APIObject<K, V> & R)[]> {
+    public async list(labelSelector?: LabelSelector): Promise<Array<APIObject<K, V> & R>> {
         const list = await this.client.get(this.baseURL, labelSelector);
         return list.items || [];
     }
@@ -103,7 +103,6 @@ export class NamespacedResourceClient<R extends MetadataObject, K, V> extends Re
         }
 
         const response = await this.client.post(url, resource);
-        console.log(response);
         return response;
     }
 

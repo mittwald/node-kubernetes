@@ -33,3 +33,32 @@ api.pods.namespace("default").list().then(pods => {
     });
 });
 ```
+
+## Supported Resources
+
+Supported:
+
+- ConfigMaps
+- Deployments
+- Ingresses
+- PersistentVolumes
+- PersistentVolumeClaims
+- Pods
+- Secrets
+- Services
+- StatefulSets
+
+Todo:
+
+- DaemonSets
+- Endpoints
+- Events
+- HorizontalPodAutoscalers
+- Jobs
+- Namespaces
+- NetworkPolicies
+- PodDisruptionBudgets
+- ReplicaSets
+- ReplicationControllers
+- ResourceQuotas
+- StorageClasses

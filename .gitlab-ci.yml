@@ -36,6 +36,12 @@ jest:
   script:
     - yarn test
 
+example_compile:
+  image: kkarczmarczyk/node-yarn:6.9
+  stage: test
+  script:
+    - node_modules/.bin/tsc -p tsconfig.test.json
+
 registry-publish:
   stage: deploy
   image: kkarczmarczyk/node-yarn:6.9

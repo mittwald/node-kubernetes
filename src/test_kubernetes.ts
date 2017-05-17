@@ -24,5 +24,10 @@ const api = new KubernetesAPI(client);
     //
     // const deployments = await api.deployments().namespace("hyperspace").list();
     // console.log(deployments);
+    //
+    // api.pods().watch({}, ev => {
+    //     console.log("POD");
+    //     console.log(ev.object);
+    // });
 
 })().catch(console.error);

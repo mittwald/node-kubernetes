@@ -57,3 +57,8 @@ export interface LabelSelector {
 export interface LocalObjectReference {
     name: string;
 }
+
+export interface WatchEvent<O> {
+    type: "ADDED"|"MODIFIED"|"DELETED"|"ERROR";
+    object: O;
+}

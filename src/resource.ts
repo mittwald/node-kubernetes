@@ -1,6 +1,13 @@
 import {KubernetesRESTClient} from "./client";
-import {APIObject, MetadataObject} from "./types/meta";
+import {APIObject, MetadataObject, WatchEvent} from "./types/meta";
 import {LabelSelector} from "./label";
+
+export interface WatchHandler<O> {
+    onAdded?(object: O): any;
+    onUpdated?(object: O): any;
+    onDeleted?(object: O): any;
+    onError?(err: any): any;
+}
 
 export class ResourceClient<R extends MetadataObject, K, V> {
 
@@ -26,6 +33,11 @@ export class ResourceClient<R extends MetadataObject, K, V> {
 
     public async get(name: string): Promise<(APIObject<K, V> & R) | undefined> {
         return await this.client.get(this.baseURL + "/" + name);
+    }
+
+    public watch(labelSelector: LabelSelector, handler: (event: WatchEvent<R>) => any, errorHandler?: (error: any) => any) {
+        errorHandler = errorHandler || (() => {});
+        this.client.watch(this.baseURL, handler, errorHandler, labelSelector);
     }
 
     public async apply(resource: R): Promise<APIObject<K, V> & R> {

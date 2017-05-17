@@ -26,8 +26,6 @@ export interface DeploymentSpec {
 }
 
 export interface Deployment {
-    apiVersion: "extensions/v1beta1";
-    kind: "Deployment";
     metadata: ObjectMeta;
     spec: DeploymentSpec;
 }

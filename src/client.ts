@@ -38,7 +38,7 @@ export class KubernetesAPI {
         return new ResourceClient(this.restClient, "/api/v1", "/persistentvolumes");
     }
 
-    public persistentVolumeClaims(): ResourceClient<PersistentVolumeClaim, "PersistentVolumeClaim", "v1"> {
+    public persistentVolumeClaims(): NamespacedResourceClient<PersistentVolumeClaim, "PersistentVolumeClaim", "v1"> {
         return new NamespacedResourceClient(this.restClient, "/api/v1", "/persistentvolumeclaims");
     }
 

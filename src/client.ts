@@ -11,6 +11,7 @@ import {StatefulSet} from "./types/statefulset";
 import {Secret} from "./types/secret";
 import {ConfigMap} from "./types/configmap";
 import {Ingress} from "./types/ingress";
+import {Namespace} from "./types/namespace";
 
 export type RequestMethod = "GET"|"POST"|"PUT"|"PATCH"|"DELETE";
 
@@ -32,6 +33,10 @@ export class KubernetesAPI {
 
     public ingresses(): NamespacedResourceClient<Ingress, "Ingress", "extensions/v1beta1"> {
         return new NamespacedResourceClient(this.restClient, "/apis/extensions/v1beta1", "/ingresses");
+    }
+
+    public namespaces(): ResourceClient<Namespace, "Namespace", "v1"> {
+        return new ResourceClient(this.restClient, "/api/v1", "/namespaces");
     }
 
     public persistentVolumes(): ResourceClient<PersistentVolume, "PersistentVolume", "v1"> {

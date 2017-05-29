@@ -1,6 +1,6 @@
 import * as request from "request";
 import {IKubernetesClientConfig} from "./config";
-import {NamespacedResourceClient, ResourceClient} from "./resource";
+import {INamespacedResourceClient, IResourceClient, NamespacedResourceClient, ResourceClient} from "./resource";
 import {Pod} from "./types/pod";
 import {isStatus} from "./types";
 import {PersistentVolume, PersistentVolumeClaim} from "./types/persistentvolume";
@@ -27,43 +27,45 @@ export class KubernetesAPI {
 
     public constructor(private restClient: KubernetesRESTClient) {}
 
-    public pods(): NamespacedResourceClient<Pod, "Pod", "v1"> {
+    public pods(): INamespacedResourceClient<Pod, "Pod", "v1"> {
         return new NamespacedResourceClient(this.restClient, "/api/v1", "/pods");
     }
 
-    public configMaps(): NamespacedResourceClient<ConfigMap, "ConfigMap", "v1"> {
+    public configMaps(): INamespacedResourceClient<ConfigMap, "ConfigMap", "v1"> {
         return new NamespacedResourceClient(this.restClient, "/api/v1", "/configmaps");
     }
 
-    public deployments(): NamespacedResourceClient<Deployment, "Deployment", "extensions/v1beta1"> {
+    public deployments(): INamespacedResourceClient<Deployment, "Deployment", "extensions/v1beta1"> {
         return new NamespacedResourceClient(this.restClient, "/apis/extensions/v1beta1", "/deployments");
     }
 
-    public ingresses(): NamespacedResourceClient<Ingress, "Ingress", "extensions/v1beta1"> {
+    public ingresses(): INamespacedResourceClient<Ingress, "Ingress", "extensions/v1beta1"> {
         return new NamespacedResourceClient(this.restClient, "/apis/extensions/v1beta1", "/ingresses");
     }
 
-    public namespaces(): ResourceClient<Namespace, "Namespace", "v1"> {
+    public namespaces(): IResourceClient<Namespace, "Namespace", "v1"> {
         return new ResourceClient(this.restClient, "/api/v1", "/namespaces");
     }
 
-    public persistentVolumes(): ResourceClient<PersistentVolume, "PersistentVolume", "v1"> {
+    public persistentVolumes(): IResourceClient<PersistentVolume, "PersistentVolume", "v1"> {
         return new ResourceClient(this.restClient, "/api/v1", "/persistentvolumes");
     }
 
-    public persistentVolumeClaims(): NamespacedResourceClient<PersistentVolumeClaim, "PersistentVolumeClaim", "v1"> {
+    public persistentVolumeClaims(): INamespacedResourceClient<PersistentVolumeClaim, "PersistentVolumeClaim", "v1"> {
         return new NamespacedResourceClient(this.restClient, "/api/v1", "/persistentvolumeclaims");
     }
 
-    public services(): NamespacedResourceClient<Service, "Service", "v1"> {
-        return new NamespacedResourceClient(this.restClient, "/api/v1", "/services");
+    public services(): INamespacedResourceClient<Service, "Service", "v1"> {
+        const client = new NamespacedResourceClient(this.restClient, "/api/v1", "/services");
+        client.supportsCollectionDeletion = false;
+        return client;
     }
 
-    public statefulSets(): NamespacedResourceClient<StatefulSet, "StatefulSet", "apps/v1beta1"> {
+    public statefulSets(): INamespacedResourceClient<StatefulSet, "StatefulSet", "apps/v1beta1"> {
         return new NamespacedResourceClient(this.restClient, "/apis/apps/v1beta1", "/statefulsets");
     }
 
-    public secrets(): NamespacedResourceClient<Secret, "Secret", "v1"> {
+    public secrets(): INamespacedResourceClient<Secret, "Secret", "v1"> {
         return new NamespacedResourceClient(this.restClient, "/api/v1", "/secrets");
     }
 }

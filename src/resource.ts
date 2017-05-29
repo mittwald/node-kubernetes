@@ -2,9 +2,25 @@ import {KubernetesRESTClient} from "./client";
 import {APIObject, MetadataObject} from "./types/meta";
 import {LabelSelector} from "./label";
 
-export class ResourceClient<R extends MetadataObject, K, V> {
+export interface IResourceClient<R extends MetadataObject, K, V> {
+    list(labelSelector?: LabelSelector): Promise<Array<APIObject<K, V> & R>>;
+    get(name: string): Promise<(APIObject<K, V> & R) | undefined>;
+    apply(resource: R): Promise<APIObject<K, V> & R>;
+    put(resource: R): Promise<APIObject<K, V> & R>;
+    post(resource: R): Promise<APIObject<K, V> & R>;
+    delete(resourceOrName: R|string): Promise<void>;
+    deleteMany(labelSelector: LabelSelector): Promise<void>;
+}
+
+export interface INamespacedResourceClient<R extends MetadataObject, K, V> extends IResourceClient<R, K, V> {
+    namespace(ns: string): IResourceClient<R, K, V>;
+    allNamespaces(): IResourceClient<R, K, V>;
+}
+
+export class ResourceClient<R extends MetadataObject, K, V> implements IResourceClient<R, K, V> {
 
     protected baseURL: string;
+    public supportsCollectionDeletion: boolean = true;
 
     public constructor(protected client: KubernetesRESTClient,
                        protected apiBaseURL: string,
@@ -58,12 +74,17 @@ export class ResourceClient<R extends MetadataObject, K, V> {
     }
 
     public async deleteMany(labelSelector: LabelSelector) {
-        return await this.client.delete(this.baseURL, labelSelector);
+        if (this.supportsCollectionDeletion) {
+            return await this.client.delete(this.baseURL, labelSelector);
+        }
+
+        const resources = await this.list(labelSelector);
+        await Promise.all(resources.map(r => this.delete(r)));
     }
 
 }
 
-export class NamespacedResourceClient<R extends MetadataObject, K, V> extends ResourceClient<R, K, V> {
+export class NamespacedResourceClient<R extends MetadataObject, K, V> extends ResourceClient<R, K, V> implements INamespacedResourceClient<R, K, V> {
     private ns?: string;
 
     public constructor(client: KubernetesRESTClient,
@@ -88,11 +109,11 @@ export class NamespacedResourceClient<R extends MetadataObject, K, V> extends Re
         return this.apiBaseURL + "/namespaces/" + r.metadata.namespace + "/" + this.resourceBaseURL + "/" + r.metadata.name;
     }
 
-    public namespace(ns: string): ResourceClient<R, K, V> {
+    public namespace(ns: string): IResourceClient<R, K, V> {
         return new NamespacedResourceClient<R, K, V>(this.client, this.apiBaseURL, this.resourceBaseURL, ns);
     }
 
-    public allNamespaces(): ResourceClient<R, K, V> {
+    public allNamespaces(): IResourceClient<R, K, V> {
         return new NamespacedResourceClient<R, K, V>(this.client, this.apiBaseURL, this.resourceBaseURL);
     }
 

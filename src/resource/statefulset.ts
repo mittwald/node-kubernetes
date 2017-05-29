@@ -1,7 +1,7 @@
 import {NamespacedResourceClient} from "../resource";
-import {Deployment} from "../types/deployment";
 import {KubernetesRESTClient} from "../client";
 import {LabelSelector} from "../label";
+import {StatefulSet} from "../types/statefulset";
 
 export interface IStatefulSetDeletionOptions {
     orphanDependents: boolean;
@@ -11,7 +11,7 @@ const defaultStatefulSetDeletionOptions: IStatefulSetDeletionOptions = {
     orphanDependents: false,
 };
 
-export class StatefulSetResourceClient extends NamespacedResourceClient<Deployment, "StatefulSet", "apps/v1beta1"> {
+export class StatefulSetResourceClient extends NamespacedResourceClient<StatefulSet, "StatefulSet", "apps/v1beta1"> {
 
     public constructor(protected client: KubernetesRESTClient) {
         super(client, "/apis/apps/v1beta1", "/statefulsets");
@@ -25,7 +25,7 @@ export class StatefulSetResourceClient extends NamespacedResourceClient<Deployme
         return super.allNamespaces() as StatefulSetResourceClient;
     }
 
-    public async delete(resourceOrName: string|Deployment,
+    public async delete(resourceOrName: string|StatefulSet,
                         opts: Partial<IStatefulSetDeletionOptions> = {}): Promise<void> {
         let url;
 

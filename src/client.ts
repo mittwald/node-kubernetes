@@ -15,6 +15,14 @@ import {Namespace} from "./types/namespace";
 
 export type RequestMethod = "GET"|"POST"|"PUT"|"PATCH"|"DELETE";
 
+export interface IKubernetesRESTClientOptions {
+    debugFn: (msg: string) => any;
+}
+
+const defaultRESTClientOptions: IKubernetesRESTClientOptions = {
+    debugFn: () => { return; },
+};
+
 export class KubernetesAPI {
 
     public constructor(private restClient: KubernetesRESTClient) {}
@@ -62,14 +70,18 @@ export class KubernetesAPI {
 
 export class KubernetesRESTClient {
 
-    public constructor(private config: IKubernetesClientConfig) {}
+    private opts: IKubernetesRESTClientOptions;
+
+    public constructor(private config: IKubernetesClientConfig, opts: Partial<IKubernetesRESTClientOptions> = {}) {
+        this.opts = {...defaultRESTClientOptions, ...opts};
+    }
 
     private request<R = any>(url: string, body?: any, method: RequestMethod = "POST", additionalOptions: request.CoreOptions = {}): Promise<R> {
         url = url.replace(/^\//, "");
         const absoluteURL = this.config.apiServerURL + "/" + url;
 
         return new Promise((res, rej) => {
-            let opts: request.Options = {
+            let opts: request.OptionsWithUrl = {
                 method,
                 url: absoluteURL,
                 json: true,
@@ -82,6 +94,8 @@ export class KubernetesRESTClient {
             opts = this.config.mapRequestOptions(opts);
             opts = {...opts, ...additionalOptions};
 
+            this.opts.debugFn(`executing ${method} request on ${opts.url}`);
+
             request(opts, (err, response, responseBody) => {
                 if (err) {
                     rej(err);
@@ -93,6 +107,7 @@ export class KubernetesRESTClient {
                     return;
                 }
 
+                this.opts.debugFn(`${method} request on ${opts.url} succeeded with status ${response.statusCode}: ${responseBody}`);
                 res(responseBody);
             });
         });
@@ -121,7 +136,7 @@ export class KubernetesRESTClient {
         const absoluteURL = this.config.apiServerURL + "/" + url;
 
         return new Promise<R|undefined>((res, rej) => {
-            let opts: request.Options = {
+            let opts: request.OptionsWithUrl = {
                 url: absoluteURL,
                 qs: {},
             };
@@ -131,6 +146,8 @@ export class KubernetesRESTClient {
             }
 
             opts = this.config.mapRequestOptions(opts);
+
+            this.opts.debugFn(`executing GET request on ${opts.url}`);
 
             request(opts, (err, response, body) => {
                 if (err) {
@@ -154,6 +171,7 @@ export class KubernetesRESTClient {
                     return;
                 }
 
+                this.opts.debugFn(`GET request on ${opts.url} succeeded with status ${response.statusCode}: ${body}`);
                 res(body);
             });
         });

@@ -5,13 +5,13 @@ import {Pod} from "./types/pod";
 import {isStatus} from "./types";
 import {PersistentVolume, PersistentVolumeClaim} from "./types/persistentvolume";
 import {LabelSelector, labelSelectorToQueryString} from "./label";
-import {Deployment} from "./types/deployment";
 import {Service} from "./types/service";
-import {StatefulSet} from "./types/statefulset";
 import {Secret} from "./types/secret";
 import {ConfigMap} from "./types/configmap";
 import {Ingress} from "./types/ingress";
 import {Namespace} from "./types/namespace";
+import {DeploymentResourceClient} from "./resource/deployment";
+import {StatefulSetResourceClient} from "./resource/statefulset";
 
 export type RequestMethod = "GET"|"POST"|"PUT"|"PATCH"|"DELETE";
 
@@ -35,8 +35,8 @@ export class KubernetesAPI {
         return new NamespacedResourceClient(this.restClient, "/api/v1", "/configmaps");
     }
 
-    public deployments(): INamespacedResourceClient<Deployment, "Deployment", "extensions/v1beta1"> {
-        return new NamespacedResourceClient(this.restClient, "/apis/extensions/v1beta1", "/deployments");
+    public deployments(): DeploymentResourceClient {
+        return new DeploymentResourceClient(this.restClient);
     }
 
     public ingresses(): INamespacedResourceClient<Ingress, "Ingress", "extensions/v1beta1"> {
@@ -61,8 +61,8 @@ export class KubernetesAPI {
         return client;
     }
 
-    public statefulSets(): INamespacedResourceClient<StatefulSet, "StatefulSet", "apps/v1beta1"> {
-        return new NamespacedResourceClient(this.restClient, "/apis/apps/v1beta1", "/statefulsets");
+    public statefulSets(): StatefulSetResourceClient {
+        return new StatefulSetResourceClient(this.restClient);
     }
 
     public secrets(): INamespacedResourceClient<Secret, "Secret", "v1"> {
@@ -123,11 +123,11 @@ export class KubernetesRESTClient {
         return this.request<R>(url, body, "PUT");
     }
 
-    public delete<R = any>(url: string, labelSelector?: LabelSelector): Promise<R> {
+    public delete<R = any>(url: string, labelSelector?: LabelSelector, queryParams: {[k: string]: string} = {}): Promise<R> {
         const opts: request.CoreOptions = {};
 
         if (labelSelector) {
-            opts.qs = {labelSelector: labelSelectorToQueryString(labelSelector)};
+            opts.qs = {...queryParams, labelSelector: labelSelectorToQueryString(labelSelector)};
         }
 
         return this.request<R>(url, undefined, "DELETE", opts);

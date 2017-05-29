@@ -12,6 +12,7 @@ import {Ingress} from "./types/ingress";
 import {Namespace} from "./types/namespace";
 import {DeploymentResourceClient} from "./resource/deployment";
 import {StatefulSetResourceClient} from "./resource/statefulset";
+import {ReplicaSet} from "./types/replicaset";
 
 export type RequestMethod = "GET"|"POST"|"PUT"|"PATCH"|"DELETE";
 
@@ -53,6 +54,10 @@ export class KubernetesAPI {
 
     public persistentVolumeClaims(): INamespacedResourceClient<PersistentVolumeClaim, "PersistentVolumeClaim", "v1"> {
         return new NamespacedResourceClient(this.restClient, "/api/v1", "/persistentvolumeclaims");
+    }
+
+    public replicaSets(): INamespacedResourceClient<ReplicaSet, "ReplicaSet", "extensions/v1beta1"> {
+        return new NamespacedResourceClient(this.restClient, "/apis/extensions/v1beta1", "/replicasets");
     }
 
     public services(): INamespacedResourceClient<Service, "Service", "v1"> {

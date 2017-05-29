@@ -8,7 +8,7 @@ export interface IKubernetesClientConfig {
     apiServerURL: string;
     namespace: string;
 
-    mapRequestOptions(opts: request.Options): request.Options;
+    mapRequestOptions<T extends request.Options = request.Options>(opts: T): T;
 
 }
 
@@ -26,7 +26,7 @@ export class GenericClientConfig implements IKubernetesClientConfig {
         this.namespace = context.context.namespace || "default";
     }
 
-    public mapRequestOptions(opts: request.Options): request.Options {
+    public mapRequestOptions<T extends request.Options = request.Options>(opts: T): T {
         const context = this.kubeconfig.contexts.find(c => c.name === this.kubeconfig["current-context"])!;
         const cluster = this.kubeconfig.clusters.find(c => c.name === context.context.cluster)!;
         const user = this.kubeconfig.users.find(c => c.name === context.context.user)!;

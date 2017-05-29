@@ -110,11 +110,15 @@ export class NamespacedResourceClient<R extends MetadataObject, K, V> extends Re
     }
 
     public namespace(ns: string): IResourceClient<R, K, V> {
-        return new NamespacedResourceClient<R, K, V>(this.client, this.apiBaseURL, this.resourceBaseURL, ns);
+        const n = new NamespacedResourceClient<R, K, V>(this.client, this.apiBaseURL, this.resourceBaseURL, ns);
+        n.supportsCollectionDeletion = this.supportsCollectionDeletion;
+        return n;
     }
 
     public allNamespaces(): IResourceClient<R, K, V> {
-        return new NamespacedResourceClient<R, K, V>(this.client, this.apiBaseURL, this.resourceBaseURL);
+        const n = new NamespacedResourceClient<R, K, V>(this.client, this.apiBaseURL, this.resourceBaseURL);
+        n.supportsCollectionDeletion = this.supportsCollectionDeletion;
+        return n;
     }
 
     public async post(resource: R) {

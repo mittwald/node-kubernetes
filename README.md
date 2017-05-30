@@ -39,26 +39,26 @@ api.pods.namespace("default").list().then(pods => {
 Supported:
 
 - ConfigMaps
+- DaemonSets
 - Deployments
+- Endpoints
 - Ingresses
+- Jobs
+- Namespaces
 - PersistentVolumes
 - PersistentVolumeClaims
 - Pods
+- ReplicaSets
 - Secrets
 - Services
 - StatefulSets
 
 Todo:
 
-- DaemonSets
-- Endpoints
 - Events
 - HorizontalPodAutoscalers
-- Jobs
-- Namespaces
 - NetworkPolicies
 - PodDisruptionBudgets
-- ReplicaSets
 - ReplicationControllers
 - ResourceQuotas
 - StorageClasses

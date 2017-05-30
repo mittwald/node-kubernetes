@@ -13,12 +13,18 @@ import {
 } from "./types";
 import {DeploymentResourceClient} from "./resource/deployment";
 import {StatefulSetResourceClient} from "./resource/statefulset";
+import {Job} from "./types/job";
+import {DaemonSet} from "./types/daemonset";
+import {Endpoint} from "./types/endpoint";
 
 export interface IKubernetesAPI {
     pods(): INamespacedResourceClient<Pod, "Pod", "v1">;
     configMaps(): INamespacedResourceClient<ConfigMap, "ConfigMap", "v1">;
+    daemonSets(): INamespacedResourceClient<DaemonSet, "DaemonSet", "extensions/v1beta1">;
     deployments(): DeploymentResourceClient;
+    endpoints(): INamespacedResourceClient<Endpoint, "Endpoint", "v1">;
     ingresses(): INamespacedResourceClient<Ingress, "Ingress", "extensions/v1beta1">;
+    jobs(): INamespacedResourceClient<Job, "Job", "batch/v1">;
     namespaces(): IResourceClient<Namespace, "Namespace", "v1">;
     persistentVolumes(): IResourceClient<PersistentVolume, "PersistentVolume", "v1">;
     persistentVolumeClaims(): INamespacedResourceClient<PersistentVolumeClaim, "PersistentVolumeClaim", "v1">;
@@ -41,12 +47,24 @@ export class KubernetesAPI implements IKubernetesAPI {
         return new NamespacedResourceClient(this.restClient, "/api/v1", "/configmaps");
     }
 
+    public daemonSets(): INamespacedResourceClient<DaemonSet, "DaemonSet", "extensions/v1beta1"> {
+        return new NamespacedResourceClient(this.restClient, "/apis/extensions/v1beta1", "/daemonsets");
+    }
+
     public deployments(): DeploymentResourceClient {
         return new DeploymentResourceClient(this.restClient);
     }
 
+    public endpoints(): INamespacedResourceClient<Endpoint, "Endpoint", "v1"> {
+        return new NamespacedResourceClient(this.restClient, "/api/v1", "/endpoints");
+    }
+
     public ingresses(): INamespacedResourceClient<Ingress, "Ingress", "extensions/v1beta1"> {
         return new NamespacedResourceClient(this.restClient, "/apis/extensions/v1beta1", "/ingresses");
+    }
+
+    public jobs(): INamespacedResourceClient<Job, "Job", "batch/v1"> {
+        return new NamespacedResourceClient(this.restClient, "/apis/batch/v1", "/jobs");
     }
 
     public namespaces(): IResourceClient<Namespace, "Namespace", "v1"> {

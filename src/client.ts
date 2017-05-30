@@ -1,18 +1,7 @@
 import * as request from "request";
 import {IKubernetesClientConfig} from "./config";
-import {INamespacedResourceClient, IResourceClient, NamespacedResourceClient, ResourceClient} from "./resource";
-import {Pod} from "./types/pod";
 import {isStatus} from "./types";
-import {PersistentVolume, PersistentVolumeClaim} from "./types/persistentvolume";
 import {LabelSelector, labelSelectorToQueryString} from "./label";
-import {Service} from "./types/service";
-import {Secret} from "./types/secret";
-import {ConfigMap} from "./types/configmap";
-import {Ingress} from "./types/ingress";
-import {Namespace} from "./types/namespace";
-import {DeploymentResourceClient} from "./resource/deployment";
-import {StatefulSetResourceClient} from "./resource/statefulset";
-import {ReplicaSet} from "./types/replicaset";
 
 export type RequestMethod = "GET"|"POST"|"PUT"|"PATCH"|"DELETE";
 
@@ -24,58 +13,14 @@ const defaultRESTClientOptions: IKubernetesRESTClientOptions = {
     debugFn: () => { return; },
 };
 
-export class KubernetesAPI {
-
-    public constructor(private restClient: KubernetesRESTClient) {}
-
-    public pods(): INamespacedResourceClient<Pod, "Pod", "v1"> {
-        return new NamespacedResourceClient(this.restClient, "/api/v1", "/pods");
-    }
-
-    public configMaps(): INamespacedResourceClient<ConfigMap, "ConfigMap", "v1"> {
-        return new NamespacedResourceClient(this.restClient, "/api/v1", "/configmaps");
-    }
-
-    public deployments(): DeploymentResourceClient {
-        return new DeploymentResourceClient(this.restClient);
-    }
-
-    public ingresses(): INamespacedResourceClient<Ingress, "Ingress", "extensions/v1beta1"> {
-        return new NamespacedResourceClient(this.restClient, "/apis/extensions/v1beta1", "/ingresses");
-    }
-
-    public namespaces(): IResourceClient<Namespace, "Namespace", "v1"> {
-        return new ResourceClient(this.restClient, "/api/v1", "/namespaces");
-    }
-
-    public persistentVolumes(): IResourceClient<PersistentVolume, "PersistentVolume", "v1"> {
-        return new ResourceClient(this.restClient, "/api/v1", "/persistentvolumes");
-    }
-
-    public persistentVolumeClaims(): INamespacedResourceClient<PersistentVolumeClaim, "PersistentVolumeClaim", "v1"> {
-        return new NamespacedResourceClient(this.restClient, "/api/v1", "/persistentvolumeclaims");
-    }
-
-    public replicaSets(): INamespacedResourceClient<ReplicaSet, "ReplicaSet", "extensions/v1beta1"> {
-        return new NamespacedResourceClient(this.restClient, "/apis/extensions/v1beta1", "/replicasets");
-    }
-
-    public services(): INamespacedResourceClient<Service, "Service", "v1"> {
-        const client = new NamespacedResourceClient(this.restClient, "/api/v1", "/services");
-        client.supportsCollectionDeletion = false;
-        return client;
-    }
-
-    public statefulSets(): StatefulSetResourceClient {
-        return new StatefulSetResourceClient(this.restClient);
-    }
-
-    public secrets(): INamespacedResourceClient<Secret, "Secret", "v1"> {
-        return new NamespacedResourceClient(this.restClient, "/api/v1", "/secrets");
-    }
+export interface IKubernetesRESTClient {
+    post<R = any>(url: string, body: any): Promise<R>;
+    put<R = any>(url: string, body: any): Promise<R>;
+    delete<R = any>(url: string, labelSelector?: LabelSelector, queryParams?: {[k: string]: string}): Promise<R>;
+    get<R = any>(url: string, labelSelector?: LabelSelector): Promise<R|undefined>;
 }
 
-export class KubernetesRESTClient {
+export class KubernetesRESTClient implements IKubernetesRESTClient {
 
     private opts: IKubernetesRESTClientOptions;
 
@@ -174,7 +119,7 @@ export class KubernetesRESTClient {
                 }
 
                 if (isStatus(body) && body.status === "Failure") {
-                    rej(body.message);
+                    rej(new Error(body.message));
                     return;
                 }
 

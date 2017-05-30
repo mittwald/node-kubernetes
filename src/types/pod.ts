@@ -1,11 +1,9 @@
-import {LocalObjectReference, ObjectMeta} from "./meta";
+import {LocalObjectReference, ObjectMeta, ResourceList} from "./meta";
 import {Affinity} from "./affinity";
 import {Container, SELinuxOptions} from "./container";
 import {PersistentVolumeSource} from "./persistentvolume";
 
 export interface Pod {
-    apiVersion: "v1";
-    kind: "Pod";
     metadata: ObjectMeta;
     spec: PodSpec;
 }
@@ -85,3 +83,5 @@ export interface PodTemplateSpec {
     metadata: Partial<ObjectMeta>;
     spec: PodSpec;
 }
+
+export type PodList = ResourceList<Pod, "PodList", "v1">;

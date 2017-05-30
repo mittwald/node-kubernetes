@@ -1,4 +1,4 @@
-import {KubernetesRESTClient} from "./client";
+import {IKubernetesRESTClient} from "./client";
 import {APIObject, MetadataObject} from "./types/meta";
 import {LabelSelector} from "./label";
 
@@ -22,7 +22,7 @@ export class ResourceClient<R extends MetadataObject, K, V> implements IResource
     protected baseURL: string;
     public supportsCollectionDeletion: boolean = true;
 
-    public constructor(protected client: KubernetesRESTClient,
+    public constructor(protected client: IKubernetesRESTClient,
                        protected apiBaseURL: string,
                        protected resourceBaseURL: string) {
         apiBaseURL = apiBaseURL.replace(/\/$/, "");
@@ -87,7 +87,7 @@ export class ResourceClient<R extends MetadataObject, K, V> implements IResource
 export class NamespacedResourceClient<R extends MetadataObject, K, V> extends ResourceClient<R, K, V> implements INamespacedResourceClient<R, K, V> {
     private ns?: string;
 
-    public constructor(client: KubernetesRESTClient,
+    public constructor(client: IKubernetesRESTClient,
                        apiBaseURL: string,
                        resourceBaseURL: string,
                        ns?: string) {
@@ -106,7 +106,12 @@ export class NamespacedResourceClient<R extends MetadataObject, K, V> extends Re
     }
 
     protected urlForResource(r: R): string {
-        return this.apiBaseURL + "/namespaces/" + r.metadata.namespace + "/" + this.resourceBaseURL + "/" + r.metadata.name;
+        const namespace = r.metadata.namespace || this.ns;
+        if (namespace) {
+            return this.apiBaseURL + "/namespaces/" + namespace + "/" + this.resourceBaseURL + "/" + r.metadata.name;
+        }
+
+        return this.apiBaseURL + "/" + this.resourceBaseURL + "/" + r.metadata.name;
     }
 
     public namespace(ns: string): IResourceClient<R, K, V> {

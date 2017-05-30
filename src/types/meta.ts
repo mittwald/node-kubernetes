@@ -34,8 +34,8 @@ export type Status = Resource<"Status", "v1"> & {
     code: number;
 };
 
-export function isStatus(s: { kind: string }): s is Status {
-    return "kind" in s && s.kind === "Status";
+export function isStatus(s: { kind: string }|undefined): s is Status {
+    return s !== undefined && "kind" in s && s.kind === "Status";
 }
 
 export interface APIResourceList {

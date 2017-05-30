@@ -1,6 +1,6 @@
 import {NamespacedResourceClient} from "../resource";
 import {Deployment} from "../types/deployment";
-import {KubernetesRESTClient} from "../client";
+import {IKubernetesRESTClient} from "../client";
 import {LabelSelector} from "../label";
 
 export interface IDeploymentDeletionOptions {
@@ -13,7 +13,7 @@ const defaultDeploymentDeletionOptions: IDeploymentDeletionOptions = {
 
 export class DeploymentResourceClient extends NamespacedResourceClient<Deployment, "Deployment", "extensions/v1beta1"> {
 
-    public constructor(protected client: KubernetesRESTClient) {
+    public constructor(protected client: IKubernetesRESTClient) {
         super(client, "/apis/extensions/v1beta1", "/deployments");
     }
 

@@ -1,4 +1,4 @@
-import {ObjectMeta} from "./meta";
+import {ObjectMeta, ResourceList} from "./meta";
 
 export interface ServiceSpecClusterIP {
     type?: "ClusterIP";
@@ -41,3 +41,5 @@ export interface Service {
     metadata: ObjectMeta;
     spec: ServiceSpec;
 }
+
+export type ServiceList = ResourceList<Service, "ServiceList", "v1">;

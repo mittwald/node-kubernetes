@@ -1,5 +1,5 @@
 import {NamespacedResourceClient} from "../resource";
-import {KubernetesRESTClient} from "../client";
+import {IKubernetesRESTClient} from "../client";
 import {LabelSelector} from "../label";
 import {StatefulSet} from "../types/statefulset";
 
@@ -13,7 +13,7 @@ const defaultStatefulSetDeletionOptions: IStatefulSetDeletionOptions = {
 
 export class StatefulSetResourceClient extends NamespacedResourceClient<StatefulSet, "StatefulSet", "apps/v1beta1"> {
 
-    public constructor(protected client: KubernetesRESTClient) {
+    public constructor(protected client: IKubernetesRESTClient) {
         super(client, "/apis/apps/v1beta1", "/statefulsets");
     }
 

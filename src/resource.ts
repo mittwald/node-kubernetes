@@ -8,7 +8,7 @@ export interface IResourceClient<R extends MetadataObject, K, V> {
     apply(resource: R): Promise<APIObject<K, V> & R>;
     put(resource: R): Promise<APIObject<K, V> & R>;
     post(resource: R): Promise<APIObject<K, V> & R>;
-    delete(resourceOrName: R|string): Promise<void>;
+    delete(resourceOrName: R|string, deleteOptions?: DeleteOptions): Promise<void>;
     deleteMany(labelSelector: LabelSelector): Promise<void>;
 }
 

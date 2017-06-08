@@ -1,5 +1,5 @@
 import {IKubernetesRESTClient} from "./client";
-import {APIObject, MetadataObject} from "./types/meta";
+import {APIObject, DeleteOptions, MetadataObject} from "./types/meta";
 import {LabelSelector} from "./label";
 
 export interface IResourceClient<R extends MetadataObject, K, V> {
@@ -62,7 +62,7 @@ export class ResourceClient<R extends MetadataObject, K, V> implements IResource
         return await this.client.post(this.baseURL, resource);
     }
 
-    public async delete(resourceOrName: R|string): Promise<void> {
+    public async delete(resourceOrName: R|string, deleteOptions?: DeleteOptions): Promise<void> {
         let url;
         if (typeof resourceOrName === "string") {
             url = this.baseURL + "/" + resourceOrName;
@@ -70,7 +70,7 @@ export class ResourceClient<R extends MetadataObject, K, V> implements IResource
             url = this.urlForResource(resourceOrName);
         }
 
-        return await this.client.delete(url);
+        return await this.client.delete(url, undefined, undefined, deleteOptions);
     }
 
     public async deleteMany(labelSelector: LabelSelector) {

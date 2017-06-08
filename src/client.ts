@@ -16,7 +16,7 @@ const defaultRESTClientOptions: IKubernetesRESTClientOptions = {
 export interface IKubernetesRESTClient {
     post<R = any>(url: string, body: any): Promise<R>;
     put<R = any>(url: string, body: any): Promise<R>;
-    delete<R = any>(url: string, labelSelector?: LabelSelector, queryParams?: {[k: string]: string}): Promise<R>;
+    delete<R = any>(url: string, labelSelector?: LabelSelector, queryParams?: {[k: string]: string}, body?: any): Promise<R>;
     get<R = any>(url: string, labelSelector?: LabelSelector): Promise<R|undefined>;
 }
 
@@ -73,14 +73,14 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
         return this.request<R>(url, body, "PUT");
     }
 
-    public delete<R = any>(url: string, labelSelector?: LabelSelector, queryParams: {[k: string]: string} = {}): Promise<R> {
+    public delete<R = any>(url: string, labelSelector?: LabelSelector, queryParams: {[k: string]: string} = {}, body?: any): Promise<R> {
         const opts: request.CoreOptions = {};
 
         if (labelSelector) {
             opts.qs = {...queryParams, labelSelector: labelSelectorToQueryString(labelSelector)};
         }
 
-        return this.request<R>(url, undefined, "DELETE", opts);
+        return this.request<R>(url, body, "DELETE", opts);
     }
 
     public get<R = any>(url: string, labelSelector?: LabelSelector): Promise<R|undefined> {

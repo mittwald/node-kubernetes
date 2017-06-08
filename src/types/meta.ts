@@ -66,3 +66,8 @@ export interface ObjectReference {
     resourceVersion: string;
     uid: string;
 }
+
+export interface DeleteOptions {
+    gracePeriodSeconds?: number;
+    orphanDependents?: boolean;
+}

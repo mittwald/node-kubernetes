@@ -2,13 +2,6 @@ import {IKubernetesRESTClient} from "./client";
 import {APIObject, DeleteOptions, MetadataObject, WatchEvent} from "./types/meta";
 import {LabelSelector} from "./label";
 
-export interface WatchHandler<O> {
-    onAdded?(object: O): any;
-    onUpdated?(object: O): any;
-    onDeleted?(object: O): any;
-    onError?(err: any): any;
-}
-
 export interface IResourceClient<R extends MetadataObject, K, V> {
     list(labelSelector?: LabelSelector): Promise<Array<APIObject<K, V> & R>>;
     get(name: string): Promise<(APIObject<K, V> & R) | undefined>;
@@ -144,8 +137,7 @@ export class NamespacedResourceClient<R extends MetadataObject, K, V> extends Re
             url = this.apiBaseURL + "/namespaces/" + resource.metadata.namespace + "/" + this.resourceBaseURL;
         }
 
-        const response = await this.client.post(url, resource);
-        return response;
+        return await this.client.post(url, resource);
     }
 
 }

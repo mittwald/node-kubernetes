@@ -1,5 +1,6 @@
 import {FileBasedConfig} from "./config";
-import {KubernetesAPI, KubernetesRESTClient} from "./client";
+import {KubernetesRESTClient} from "./client";
+import {KubernetesAPI} from "./api";
 
 const config = new FileBasedConfig("/home/mhelmich/.kube/config");
 const client = new KubernetesRESTClient(config);

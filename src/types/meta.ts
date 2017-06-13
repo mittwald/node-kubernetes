@@ -34,8 +34,8 @@ export type Status = Resource<"Status", "v1"> & {
     code: number;
 };
 
-export function isStatus(s: { kind: string }): s is Status {
-    return "kind" in s && s.kind === "Status";
+export function isStatus(s: { kind: string }|undefined): s is Status {
+    return s !== undefined && "kind" in s && s.kind === "Status";
 }
 
 export interface APIResourceList {
@@ -61,4 +61,18 @@ export interface LocalObjectReference {
 export interface WatchEvent<O> {
     type: "ADDED"|"MODIFIED"|"DELETED"|"ERROR";
     object: O;
+}
+
+export interface ObjectReference {
+    fieldPath?: string;
+    kind: string;
+    name: string;
+    namespace: string;
+    resourceVersion: string;
+    uid: string;
+}
+
+export interface DeleteOptions {
+    gracePeriodSeconds?: number;
+    orphanDependents?: boolean;
 }

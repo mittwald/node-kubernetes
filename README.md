@@ -47,26 +47,26 @@ api.pods.namespace("default").watch({"some-label": "foo"}, ev => {
 Supported:
 
 - ConfigMaps
+- DaemonSets
 - Deployments
+- Endpoints
 - Ingresses
+- Jobs
+- Namespaces
 - PersistentVolumes
 - PersistentVolumeClaims
 - Pods
+- ReplicaSets
 - Secrets
 - Services
 - StatefulSets
 
 Todo:
 
-- DaemonSets
-- Endpoints
 - Events
 - HorizontalPodAutoscalers
-- Jobs
-- Namespaces
 - NetworkPolicies
 - PodDisruptionBudgets
-- ReplicaSets
 - ReplicationControllers
 - ResourceQuotas
 - StorageClasses

@@ -1,11 +1,9 @@
-import {LocalObjectReference, ObjectMeta} from "./meta";
+import {LocalObjectReference, ObjectMeta, ResourceList} from "./meta";
 import {Affinity} from "./affinity";
 import {Container, SELinuxOptions} from "./container";
 import {PersistentVolumeSource} from "./persistentvolume";
 
 export interface Pod {
-    apiVersion: "v1";
-    kind: "Pod";
     metadata: ObjectMeta;
     spec: PodSpec;
 }
@@ -46,7 +44,15 @@ export interface ConfigMapVolumeSource {
     name: string;
 }
 
-export type VolumeSource = PersistentVolumeSource | {secret: SecretVolumeSource} | {configMap: ConfigMapVolumeSource};
+export interface PersistentVolumeClaimVolumeSource {
+    claimName: string;
+    readOnly?: boolean;
+}
+
+export type VolumeSource = PersistentVolumeSource
+    | {secret: SecretVolumeSource}
+    | {configMap: ConfigMapVolumeSource}
+    | {persistentVolumeClaim: PersistentVolumeClaimVolumeSource};
 export type Volume = {name: string} & VolumeSource;
 
 export interface PodSpec {
@@ -77,3 +83,5 @@ export interface PodTemplateSpec {
     metadata: Partial<ObjectMeta>;
     spec: PodSpec;
 }
+
+export type PodList = ResourceList<Pod, "PodList", "v1">;

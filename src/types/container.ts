@@ -18,7 +18,7 @@ export interface ResourceFieldSelector {
 export interface SecretKeySelector {
     key: string;
     name: string;
-    optional?: string;
+    optional?: boolean;
 }
 
 export type EnvVarSource = {configMapKeyRef: ConfigMapKeySelector} |

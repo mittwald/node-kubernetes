@@ -2,22 +2,22 @@ import {IKubernetesRESTClient} from "./client";
 import {APIObject, DeleteOptions, MetadataObject} from "./types/meta";
 import {LabelSelector} from "./label";
 
-export interface IResourceClient<R extends MetadataObject, K, V> {
-    list(labelSelector?: LabelSelector): Promise<Array<APIObject<K, V> & R>>;
-    get(name: string): Promise<(APIObject<K, V> & R) | undefined>;
-    apply(resource: R): Promise<APIObject<K, V> & R>;
-    put(resource: R): Promise<APIObject<K, V> & R>;
-    post(resource: R): Promise<APIObject<K, V> & R>;
+export interface IResourceClient<R extends MetadataObject, K, V, O extends R = R> {
+    list(labelSelector?: LabelSelector): Promise<Array<APIObject<K, V> & O>>;
+    get(name: string): Promise<(APIObject<K, V> & O) | undefined>;
+    apply(resource: R): Promise<APIObject<K, V> & O>;
+    put(resource: R): Promise<APIObject<K, V> & O>;
+    post(resource: R): Promise<APIObject<K, V> & O>;
     delete(resourceOrName: R|string, deleteOptions?: DeleteOptions): Promise<void>;
     deleteMany(labelSelector: LabelSelector): Promise<void>;
 }
 
-export interface INamespacedResourceClient<R extends MetadataObject, K, V> extends IResourceClient<R, K, V> {
+export interface INamespacedResourceClient<R extends MetadataObject, K, V, O extends R = R> extends IResourceClient<R, K, V, O> {
     namespace(ns: string): IResourceClient<R, K, V>;
     allNamespaces(): IResourceClient<R, K, V>;
 }
 
-export class ResourceClient<R extends MetadataObject, K, V> implements IResourceClient<R, K, V> {
+export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> implements IResourceClient<R, K, V, O> {
 
     protected baseURL: string;
     public supportsCollectionDeletion: boolean = true;
@@ -35,16 +35,16 @@ export class ResourceClient<R extends MetadataObject, K, V> implements IResource
         return this.baseURL + "/" + r.metadata.name;
     }
 
-    public async list(labelSelector?: LabelSelector): Promise<Array<APIObject<K, V> & R>> {
+    public async list(labelSelector?: LabelSelector): Promise<Array<APIObject<K, V> & O>> {
         const list = await this.client.get(this.baseURL, labelSelector);
         return list.items || [];
     }
 
-    public async get(name: string): Promise<(APIObject<K, V> & R) | undefined> {
+    public async get(name: string): Promise<(APIObject<K, V> & O) | undefined> {
         return await this.client.get(this.baseURL + "/" + name);
     }
 
-    public async apply(resource: R): Promise<APIObject<K, V> & R> {
+    public async apply(resource: R): Promise<APIObject<K, V> & O> {
         const existing = await this.client.get(this.urlForResource(resource));
 
         if (existing) {
@@ -54,11 +54,11 @@ export class ResourceClient<R extends MetadataObject, K, V> implements IResource
         }
     }
 
-    public async put(resource: R): Promise<APIObject<K, V> & R> {
+    public async put(resource: R): Promise<APIObject<K, V> & O> {
         return await this.client.put(this.urlForResource(resource), resource);
     }
 
-    public async post(resource: R): Promise<APIObject<K, V> & R> {
+    public async post(resource: R): Promise<APIObject<K, V> & O> {
         return await this.client.post(this.baseURL, resource);
     }
 
@@ -84,7 +84,7 @@ export class ResourceClient<R extends MetadataObject, K, V> implements IResource
 
 }
 
-export class NamespacedResourceClient<R extends MetadataObject, K, V> extends ResourceClient<R, K, V> implements INamespacedResourceClient<R, K, V> {
+export class NamespacedResourceClient<R extends MetadataObject, K, V, O extends R = R> extends ResourceClient<R, K, V, O> implements INamespacedResourceClient<R, K, V, O> {
     private ns?: string;
 
     public constructor(client: IKubernetesRESTClient,
@@ -114,14 +114,14 @@ export class NamespacedResourceClient<R extends MetadataObject, K, V> extends Re
         return this.apiBaseURL + "/" + this.resourceBaseURL + "/" + r.metadata.name;
     }
 
-    public namespace(ns: string): IResourceClient<R, K, V> {
-        const n = new NamespacedResourceClient<R, K, V>(this.client, this.apiBaseURL, this.resourceBaseURL, ns);
+    public namespace(ns: string): IResourceClient<R, K, V, O> {
+        const n = new NamespacedResourceClient<R, K, V, O>(this.client, this.apiBaseURL, this.resourceBaseURL, ns);
         n.supportsCollectionDeletion = this.supportsCollectionDeletion;
         return n;
     }
 
-    public allNamespaces(): IResourceClient<R, K, V> {
-        const n = new NamespacedResourceClient<R, K, V>(this.client, this.apiBaseURL, this.resourceBaseURL);
+    public allNamespaces(): IResourceClient<R, K, V, O> {
+        const n = new NamespacedResourceClient<R, K, V, O>(this.client, this.apiBaseURL, this.resourceBaseURL);
         n.supportsCollectionDeletion = this.supportsCollectionDeletion;
         return n;
     }
@@ -132,8 +132,7 @@ export class NamespacedResourceClient<R extends MetadataObject, K, V> extends Re
             url = this.apiBaseURL + "/namespaces/" + resource.metadata.namespace + "/" + this.resourceBaseURL;
         }
 
-        const response = await this.client.post(url, resource);
-        return response;
+        return await this.client.post(url, resource);
     }
 
 }

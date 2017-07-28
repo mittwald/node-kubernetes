@@ -13,8 +13,8 @@ export interface IResourceClient<R extends MetadataObject, K, V, O extends R = R
 }
 
 export interface INamespacedResourceClient<R extends MetadataObject, K, V, O extends R = R> extends IResourceClient<R, K, V, O> {
-    namespace(ns: string): IResourceClient<R, K, V>;
-    allNamespaces(): IResourceClient<R, K, V>;
+    namespace(ns: string): IResourceClient<R, K, V, O>;
+    allNamespaces(): IResourceClient<R, K, V, O>;
 }
 
 export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> implements IResourceClient<R, K, V, O> {

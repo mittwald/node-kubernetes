@@ -7,6 +7,7 @@ import {
     PersistentVolume,
     PersistentVolumeClaim,
     Pod,
+    PodWithStatus,
     ReplicaSet,
     Secret,
     Service,
@@ -18,7 +19,7 @@ import {DaemonSet} from "./types/daemonset";
 import {Endpoint} from "./types/endpoint";
 
 export interface IKubernetesAPI {
-    pods(): INamespacedResourceClient<Pod, "Pod", "v1">;
+    pods(): INamespacedResourceClient<Pod, "Pod", "v1", PodWithStatus>;
     configMaps(): INamespacedResourceClient<ConfigMap, "ConfigMap", "v1">;
     daemonSets(): INamespacedResourceClient<DaemonSet, "DaemonSet", "extensions/v1beta1">;
     deployments(): DeploymentResourceClient;
@@ -39,7 +40,7 @@ export class KubernetesAPI implements IKubernetesAPI {
     public constructor(private restClient: IKubernetesRESTClient) {
     }
 
-    public pods(): INamespacedResourceClient<Pod, "Pod", "v1"> {
+    public pods(): INamespacedResourceClient<Pod, "Pod", "v1", PodWithStatus> {
         return new NamespacedResourceClient(this.restClient, "/api/v1", "/pods");
     }
 

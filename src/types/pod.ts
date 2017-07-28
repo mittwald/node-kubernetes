@@ -79,9 +79,69 @@ export interface PodSpec {
     volumes?: Volume[];
 }
 
+export interface PodStatus {
+    conditions: PodCondition[];
+    containerStatuses: ContainerStatus[];
+    hostIP: string;
+    initContainerStatuses: ContainerStatus[];
+    message: string;
+    phase: "Pending"|"Running"|"Succeeded"|"Failed"|"Unknown";
+    podIP: string;
+    qosClass: "BestEffort"|"Burstable"|"Guaranteed";
+    reason: string;
+    startTime: string;
+}
+
+export interface PodCondition {
+    lastProbeTime: string;
+    lastTransitionTime: string;
+    message: string;
+    reason: string;
+    status: "True"|"False"|"Unknown";
+    type: "Ready"|"Initialized"|"PodScheduled";
+}
+
+export interface ContainerStatus {
+    containerID: string;
+    image: string;
+    imageID: string;
+    lastState: ContainerState;
+    name: string;
+    ready: boolean;
+    restartCount: number;
+    state: ContainerState;
+}
+
+export type ContainerState =
+    {running: ContainerStateRunning} |
+    {terminated: ContainerStateTerminated} |
+    {waiting: ContainerStateWaiting} |
+    {};
+
+export interface ContainerStateRunning {
+    startedAt: string;
+}
+
+export interface ContainerStateTerminated {
+    containerID: string;
+    exitCode: number;
+    finishedAt: string;
+    message: string;
+    reason: string;
+    signal: number;
+    startedAt: string;
+}
+
+export interface ContainerStateWaiting {
+    message: string;
+    reason: string;
+}
+
 export interface PodTemplateSpec {
     metadata: Partial<ObjectMeta>;
     spec: PodSpec;
 }
 
 export type PodList = ResourceList<Pod, "PodList", "v1">;
+
+export type PodWithStatus = Pod & {status: PodStatus};

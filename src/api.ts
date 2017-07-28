@@ -7,6 +7,7 @@ import {
     PersistentVolume,
     PersistentVolumeClaim,
     Pod,
+    PodWithStatus,
     ReplicaSet,
     Secret,
     Service,
@@ -39,7 +40,7 @@ export class KubernetesAPI implements IKubernetesAPI {
     public constructor(private restClient: IKubernetesRESTClient) {
     }
 
-    public pods(): INamespacedResourceClient<Pod, "Pod", "v1"> {
+    public pods(): INamespacedResourceClient<Pod, "Pod", "v1", PodWithStatus> {
         return new NamespacedResourceClient(this.restClient, "/api/v1", "/pods");
     }
 

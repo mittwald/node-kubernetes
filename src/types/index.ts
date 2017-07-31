@@ -9,6 +9,7 @@ export * from "./ingress";
 export * from "./job";
 export * from "./meta";
 export * from "./namespace";
+export * from "./networkpolicy";
 export * from "./node";
 export * from "./persistentvolume";
 export * from "./pod";

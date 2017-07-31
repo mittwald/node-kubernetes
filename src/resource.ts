@@ -10,7 +10,7 @@ export interface IResourceClient<R extends MetadataObject, K, V, O extends R = R
     post(resource: R): Promise<APIObject<K, V> & O>;
     delete(resourceOrName: R|string, deleteOptions?: DeleteOptions): Promise<void>;
     deleteMany(labelSelector: LabelSelector): Promise<void>;
-    watch(labelSelector: LabelSelector, handler: (event: WatchEvent<O>) => any, errorHandler?: (error: any) => any): void;
+    watch(labelSelector: LabelSelector, handler: (event: WatchEvent<O>) => any, errorHandler?: (error: any) => any): Promise<void>;
 }
 
 export interface INamespacedResourceClient<R extends MetadataObject, K, V, O extends R = R> extends IResourceClient<R, K, V, O> {
@@ -45,9 +45,9 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
         return await this.client.get(this.baseURL + "/" + name);
     }
 
-    public watch(labelSelector: LabelSelector, handler: (event: WatchEvent<O>) => any, errorHandler?: (error: any) => any) {
+    public watch(labelSelector: LabelSelector, handler: (event: WatchEvent<O>) => any, errorHandler?: (error: any) => any): Promise<void> {
         errorHandler = errorHandler || (() => {});
-        this.client.watch(this.baseURL, handler, errorHandler, labelSelector);
+        return this.client.watch(this.baseURL, handler, errorHandler, labelSelector);
     }
 
     public async apply(resource: R): Promise<APIObject<K, V> & O> {

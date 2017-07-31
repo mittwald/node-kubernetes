@@ -10,6 +10,7 @@ export interface IResourceClient<R extends MetadataObject, K, V, O extends R = R
     post(resource: R): Promise<APIObject<K, V> & O>;
     delete(resourceOrName: R|string, deleteOptions?: DeleteOptions): Promise<void>;
     deleteMany(labelSelector: LabelSelector): Promise<void>;
+    watch(labelSelector: LabelSelector, handler: (event: WatchEvent<O>) => any, errorHandler?: (error: any) => any): void;
 }
 
 export interface INamespacedResourceClient<R extends MetadataObject, K, V, O extends R = R> extends IResourceClient<R, K, V, O> {

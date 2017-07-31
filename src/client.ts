@@ -19,7 +19,7 @@ export interface IKubernetesRESTClient {
     put<R = any>(url: string, body: any): Promise<R>;
     delete<R = any>(url: string, labelSelector?: LabelSelector, queryParams?: {[k: string]: string}, body?: any): Promise<R>;
     get<R = any>(url: string, labelSelector?: LabelSelector): Promise<R|undefined>;
-    watch<R = any>(url: string, onUpdate: (o: WatchEvent<R>) => any, onError: (err: any) => any, labelSelector?: LabelSelector): void;
+    watch<R = any>(url: string, onUpdate: (o: WatchEvent<R>) => any, onError: (err: any) => any, labelSelector?: LabelSelector): Promise<void>;
 }
 
 export class KubernetesRESTClient implements IKubernetesRESTClient {
@@ -85,7 +85,7 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
         return this.request<R>(url, body, "DELETE", opts);
     }
 
-    public watch<R = any>(url: string, onUpdate: (o: WatchEvent<R>) => any, onError: (err: any) => any, labelSelector?: LabelSelector) {
+    public watch<R = any>(url: string, onUpdate: (o: WatchEvent<R>) => any, onError: (err: any) => any, labelSelector?: LabelSelector): Promise<void> {
         url = url.replace(/^\//, "");
         const absoluteURL = this.config.apiServerURL + "/" + url;
         let opts: request.Options = {
@@ -99,46 +99,50 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
 
         opts = this.config.mapRequestOptions(opts);
 
-        const req = request(opts, (err, response, body) => {
-            if (err) {
-                onError(err);
-                return;
-            }
+        return new Promise<void>((res, rej) => {
+            const req = request(opts, (err, response, body) => {
+                if (err) {
+                    rej(err);
+                    return;
+                }
 
-            if (response.statusCode && response.statusCode >= 400) {
-                onError(new Error("Unexpected status code: " + response.statusCode));
-                return;
-            }
+                if (response.statusCode && response.statusCode >= 400) {
+                    rej(new Error("Unexpected status code: " + response.statusCode));
+                    return;
+                }
 
-            try {
-                body = JSON.parse(body);
-            } catch (err) {
-                onError(err);
-                return;
-            }
+                try {
+                    body = JSON.parse(body);
+                } catch (err) {
+                    rej(err);
+                    return;
+                }
 
-            if (isStatus(body) && body.status === "Failure") {
-                onError(body.message);
-                return;
-            }
-        });
+                if (isStatus(body) && body.status === "Failure") {
+                    rej(body.message);
+                    return;
+                }
 
-        let buffer = "";
+                res();
+            });
 
-        req.on("data", chunk => {
-            if (chunk instanceof Buffer) {
-                chunk = chunk.toString("utf-8");
-            }
+            let buffer = "";
 
-            buffer += chunk;
+            req.on("data", chunk => {
+                if (chunk instanceof Buffer) {
+                    chunk = chunk.toString("utf-8");
+                }
 
-            try {
-                const obj: WatchEvent<R> = JSON.parse(buffer);
-                buffer = "";
-                onUpdate(obj);
-            } catch (err) {
-                onError(err);
-            }
+                buffer += chunk;
+
+                try {
+                    const obj: WatchEvent<R> = JSON.parse(buffer);
+                    buffer = "";
+                    onUpdate(obj);
+                } catch (err) {
+                    onError(err);
+                }
+            });
         });
     }
 

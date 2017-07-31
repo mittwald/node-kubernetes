@@ -1,5 +1,5 @@
 import {IKubernetesRESTClient} from "./client";
-import {APIObject, DeleteOptions, MetadataObject} from "./types/meta";
+import {APIObject, DeleteOptions, MetadataObject, WatchEvent} from "./types/meta";
 import {LabelSelector} from "./label";
 
 export interface IResourceClient<R extends MetadataObject, K, V, O extends R = R> {
@@ -42,6 +42,11 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
 
     public async get(name: string): Promise<(APIObject<K, V> & O) | undefined> {
         return await this.client.get(this.baseURL + "/" + name);
+    }
+
+    public watch(labelSelector: LabelSelector, handler: (event: WatchEvent<O>) => any, errorHandler?: (error: any) => any) {
+        errorHandler = errorHandler || (() => {});
+        this.client.watch(this.baseURL, handler, errorHandler, labelSelector);
     }
 
     public async apply(resource: R): Promise<APIObject<K, V> & O> {

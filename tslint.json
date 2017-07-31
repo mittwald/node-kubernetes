@@ -13,7 +13,9 @@
     "no-empty-interface": false,
     "max-classes-per-file": [false],
     "no-var-requires": false,
-    "arrow-parens": false
+    "arrow-parens": false,
+    "no-unused-expression": false,
+    "no-empty": false
   },
   "rulesDirectory": []
 }

@@ -2,6 +2,7 @@ import * as request from "request";
 import {IKubernetesClientConfig} from "./config";
 import {isStatus} from "./types";
 import {LabelSelector, labelSelectorToQueryString} from "./label";
+import {WatchEvent} from "./types/meta";
 
 export type RequestMethod = "GET"|"POST"|"PUT"|"PATCH"|"DELETE";
 
@@ -18,6 +19,7 @@ export interface IKubernetesRESTClient {
     put<R = any>(url: string, body: any): Promise<R>;
     delete<R = any>(url: string, labelSelector?: LabelSelector, queryParams?: {[k: string]: string}, body?: any): Promise<R>;
     get<R = any>(url: string, labelSelector?: LabelSelector): Promise<R|undefined>;
+    watch<R = any>(url: string, onUpdate: (o: WatchEvent<R>) => any, onError: (err: any) => any, labelSelector?: LabelSelector): void;
 }
 
 export class KubernetesRESTClient implements IKubernetesRESTClient {
@@ -83,6 +85,63 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
         return this.request<R>(url, body, "DELETE", opts);
     }
 
+    public watch<R = any>(url: string, onUpdate: (o: WatchEvent<R>) => any, onError: (err: any) => any, labelSelector?: LabelSelector) {
+        url = url.replace(/^\//, "");
+        const absoluteURL = this.config.apiServerURL + "/" + url;
+        let opts: request.Options = {
+            url: absoluteURL,
+            qs: {watch: "true"},
+        };
+
+        if (labelSelector) {
+            opts.qs.labelSelector = labelSelectorToQueryString(labelSelector);
+        }
+
+        opts = this.config.mapRequestOptions(opts);
+
+        const req = request(opts, (err, response, body) => {
+            if (err) {
+                onError(err);
+                return;
+            }
+
+            if (response.statusCode && response.statusCode >= 400) {
+                onError(new Error("Unexpected status code: " + response.statusCode));
+                return;
+            }
+
+            try {
+                body = JSON.parse(body);
+            } catch (err) {
+                onError(err);
+                return;
+            }
+
+            if (isStatus(body) && body.status === "Failure") {
+                onError(body.message);
+                return;
+            }
+        });
+
+        let buffer = "";
+
+        req.on("data", chunk => {
+            if (chunk instanceof Buffer) {
+                chunk = chunk.toString("utf-8");
+            }
+
+            buffer += chunk;
+
+            try {
+                const obj: WatchEvent<R> = JSON.parse(buffer);
+                buffer = "";
+                onUpdate(obj);
+            } catch (err) {
+                onError(err);
+            }
+        });
+    }
+
     public get<R = any>(url: string, labelSelector?: LabelSelector): Promise<R|undefined> {
         url = url.replace(/^\//, "");
         const absoluteURL = this.config.apiServerURL + "/" + url;
@@ -109,6 +168,7 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
 
                 if (response.statusCode === 404) {
                     res(undefined);
+                    return;
                 }
 
                 try {

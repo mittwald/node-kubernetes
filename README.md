@@ -34,6 +34,14 @@ api.pods.namespace("default").list().then(pods => {
 });
 ```
 
+## Watching resources
+
+```typescript
+api.pods.namespace("default").watch({"some-label": "foo"}, ev => {
+    console.log(`Pod: ${ev.type}: ${ev.object}`);    
+});
+```
+
 ## Supported Resources
 
 Supported:
@@ -62,3 +70,8 @@ Todo:
 - ReplicationControllers
 - ResourceQuotas
 - StorageClasses
+
+## References
+
+- https://kubernetes.io/docs/api-reference/v1.6
+- https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md

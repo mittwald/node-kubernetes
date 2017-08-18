@@ -11,8 +11,8 @@ export interface NetworkPolicySpec {
 }
 
 export interface NetworkPolicyIngressRule {
-    from: NetworkPolicyPeer[];
-    ports: NetworkPolicyPort[];
+    from?: NetworkPolicyPeer[];
+    ports?: NetworkPolicyPort[];
 }
 
 export interface NetworkPolicyPeer {

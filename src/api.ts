@@ -17,6 +17,7 @@ import {StatefulSetResourceClient} from "./resource/statefulset";
 import {Job} from "./types/job";
 import {DaemonSet} from "./types/daemonset";
 import {Endpoint} from "./types/endpoint";
+import {NetworkPolicy} from "./types/networkpolicy";
 
 export interface IKubernetesAPI {
     pods(): INamespacedResourceClient<Pod, "Pod", "v1", PodWithStatus>;
@@ -27,6 +28,7 @@ export interface IKubernetesAPI {
     ingresses(): INamespacedResourceClient<Ingress, "Ingress", "extensions/v1beta1">;
     jobs(): INamespacedResourceClient<Job, "Job", "batch/v1">;
     namespaces(): IResourceClient<Namespace, "Namespace", "v1">;
+    networkPolicies(): INamespacedResourceClient<NetworkPolicy, "NetworkPolicy", "extensions/v1beta1">;
     persistentVolumes(): IResourceClient<PersistentVolume, "PersistentVolume", "v1">;
     persistentVolumeClaims(): INamespacedResourceClient<PersistentVolumeClaim, "PersistentVolumeClaim", "v1">;
     replicaSets(): INamespacedResourceClient<ReplicaSet, "ReplicaSet", "extensions/v1beta1">;
@@ -70,6 +72,10 @@ export class KubernetesAPI implements IKubernetesAPI {
 
     public namespaces(): IResourceClient<Namespace, "Namespace", "v1"> {
         return new ResourceClient(this.restClient, "/api/v1", "/namespaces");
+    }
+
+    public networkPolicies(): INamespacedResourceClient<NetworkPolicy, "NetworkPolicy", "extensions/v1beta1"> {
+        return new NamespacedResourceClient(this.restClient, "/apis/extensions/v1beta1", "/networkpolicies");
     }
 
     public persistentVolumes(): IResourceClient<PersistentVolume, "PersistentVolume", "v1"> {

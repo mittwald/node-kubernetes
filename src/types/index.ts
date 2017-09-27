@@ -17,3 +17,6 @@ export * from "./replicaset";
 export * from "./secret";
 export * from "./service";
 export * from "./statefulset";
+export * from "./serviceaccount";
+export * from "./policyrule";
+export * from "./role";

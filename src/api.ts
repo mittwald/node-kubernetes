@@ -11,6 +11,9 @@ import {
     ReplicaSet,
     Secret,
     Service,
+    ServiceAccount,
+    Role,
+    RoleBinding,
 } from "./types";
 import {DeploymentResourceClient} from "./resource/deployment";
 import {StatefulSetResourceClient} from "./resource/statefulset";
@@ -35,6 +38,9 @@ export interface IKubernetesAPI {
     services(): INamespacedResourceClient<Service, "Service", "v1">;
     statefulSets(): StatefulSetResourceClient;
     secrets(): INamespacedResourceClient<Secret, "Secret", "v1">;
+    serviceAccounts(): INamespacedResourceClient<ServiceAccount, "ServiceAccount", "v1">;
+    roles(): INamespacedResourceClient<Role, "Role", "rbac.authorization.k8s.io/v1beta1">;
+    roleBindings(): INamespacedResourceClient<RoleBinding, "RoleBinding", "rbac.authorization.k8s.io/v1beta1">;
 }
 
 export class KubernetesAPI implements IKubernetesAPI {
@@ -102,5 +108,17 @@ export class KubernetesAPI implements IKubernetesAPI {
 
     public secrets(): INamespacedResourceClient<Secret, "Secret", "v1"> {
         return new NamespacedResourceClient(this.restClient, "/api/v1", "/secrets");
+    }
+
+    public serviceAccounts(): INamespacedResourceClient<ServiceAccount, "ServiceAccount", "v1"> {
+        return new NamespacedResourceClient(this.restClient, "/api/v1", "/serviceaccounts");
+    }
+
+    public roles(): INamespacedResourceClient<Role, "Role", "rbac.authorization.k8s.io/v1beta1"> {
+        return new NamespacedResourceClient(this.restClient, "/apis/rbac.authorization.k8s.io/v1beta1", "/roles");
+    }
+
+    public roleBindings(): INamespacedResourceClient<RoleBinding, "RoleBinding", "rbac.authorization.k8s.io/v1beta1"> {
+        return new NamespacedResourceClient(this.restClient, "/apis/rbac.authorization.k8s.io/v1beta1", "/rolebindings");
     }
 }

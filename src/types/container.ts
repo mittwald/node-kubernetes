@@ -54,7 +54,7 @@ export interface HTTPGetAction {
     httpHeaders?: HTTPHeader[];
     path: string;
     port: number|string;
-    scheme?: "http"|"https";
+    scheme?: "HTTP"|"HTTPS";
 }
 
 export interface TCPSocketAction {

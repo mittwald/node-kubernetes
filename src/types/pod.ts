@@ -81,9 +81,9 @@ export interface PodSpec {
 
 export interface PodStatus {
     conditions: PodCondition[];
-    containerStatuses: ContainerStatus[];
+    containerStatuses?: ContainerStatus[];
     hostIP: string;
-    initContainerStatuses: ContainerStatus[];
+    initContainerStatuses?: ContainerStatus[];
     message: string;
     phase: "Pending"|"Running"|"Succeeded"|"Failed"|"Unknown";
     podIP: string;

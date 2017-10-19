@@ -1,5 +1,5 @@
 before_script:
-  - curl https://gitlab.mittwald.it/snippets/10/raw | bash
+  - curl https://gitlab.mittwald.it/snippets/11/raw | bash
 
 cache:
   paths:

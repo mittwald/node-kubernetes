@@ -1,18 +1,5 @@
 before_script:
-  - |
-    if which npm ; then
-      cat <<EOT >> ~/.npmrc
-      registry=https://registry.npmjs.org/
-      @types:registry=https://registry.npmjs.org/
-      @hyperspace-contracts:registry=https://npm.mittwald.it/
-      @hyperspace:registry=https://npm.mittwald.it/
-      @mittwald:registry=https://npm.mittwald.it/
-      //npm.mittwald.it/:_authToken="${NPM_TOKEN}"
-      EOT
-      yarn install
-      git config user.email gitlab@spaces.de
-      git config user.name "Gitlab CI"
-    fi
+  - curl https://gitlab.mittwald.it/snippets/10/raw | bash
 
 cache:
   paths:

@@ -15,10 +15,7 @@ export interface NetworkPolicyIngressRule {
     ports?: NetworkPolicyPort[];
 }
 
-export interface NetworkPolicyPeer {
-    namespaceSelector: LabelSelector;
-    podSelector: LabelSelector;
-}
+export type NetworkPolicyPeer = {namespaceSelector: LabelSelector} | {podSelector: LabelSelector};
 
 export interface NetworkPolicyPort {
     port?: number|string;

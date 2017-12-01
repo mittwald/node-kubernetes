@@ -97,7 +97,7 @@ export class KubernetesAPI implements IKubernetesAPI {
     }
 
     public services(): INamespacedResourceClient<Service, "Service", "v1"> {
-        const client = new NamespacedResourceClient(this.restClient, "/api/v1", "/services");
+        const client = new NamespacedResourceClient<Service, "Service", "v1">(this.restClient, "/api/v1", "/services");
         client.supportsCollectionDeletion = false;
         return client;
     }

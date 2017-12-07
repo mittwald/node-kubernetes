@@ -5,7 +5,7 @@ export interface ConfigMapKeySelector {
 }
 
 export interface ObjectFieldSelector {
-    apiVersion: string;
+    apiVersion?: string;
     fieldPath: string;
 }
 

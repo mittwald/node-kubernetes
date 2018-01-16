@@ -42,6 +42,22 @@ api.pods.namespace("default").watch({"some-label": "foo"}, ev => {
 });
 ```
 
+## Rate-limiting API access
+
+```typescript
+import {
+    InClusterConfig, 
+    KubernetesRESTClient, 
+    RatelimitingKubernetesRESTClient, 
+    KubernetesAPI,
+} from "@mittwald/kubernetes";
+
+const config = new InClusterConfig();
+const client = new KubernetesRESTClient(config);
+const limitedClient = new RatelimitingKubernetesRESTClient(client);
+const api = new KubernetesAPI(limitedClient);
+```
+
 ## Supported Resources
 
 Supported:

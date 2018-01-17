@@ -93,38 +93,38 @@ This library supports a reasonable subset of Kubernetes resources
 new issue or pull request to add support for additional API objects.
 
 - core/v1
-    - pods
-    - configMaps
-    - endpoints
-    - namespaces
-    - nodes
-    - persistentVolumes
-    - persistentVolumeClaims
-    - services
-    - secrets
-    - serviceAccounts
+    ** pods
+    ** configMaps
+    ** endpoints
+    ** namespaces
+    ** nodes
+    ** persistentVolumes
+    ** persistentVolumeClaims
+    ** services
+    ** secrets
+    ** serviceAccounts
 - apps/v1
-    - daemonSets
-    - deployments
-    - replicaSets
-    - statefulSets
+    ** daemonSets
+    ** deployments
+    ** replicaSets
+    ** statefulSets
 - apps/v1beta1
-    - deployments
-    - statefulSets
+    ** deployments
+    ** statefulSets
 - batch/v1
-    - jobs
+    ** jobs
 - batch/v1beta1
-    - cronJobs
+    ** cronJobs
 - extensions/v1beta1
-    - daemonSets
-    - ingresses
-    - networkPolicies
-    - replicaSets
+    ** daemonSets
+    ** ingresses
+    ** networkPolicies
+    ** replicaSets
 - rbac/v1
-    - clusterRoles
-    - clusterRoleBindings
-    - roles
-    - roleBindings
+    ** clusterRoles
+    ** clusterRoleBindings
+    ** roles
+    ** roleBindings
 
 == References
 

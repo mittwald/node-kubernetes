@@ -1,7 +1,8 @@
-import {LocalObjectReference, ObjectMeta, ResourceList} from "../../meta";
+import {LocalObjectReference, ResourceList} from "../../meta";
 import {Affinity} from "./affinity";
 import {Container, SELinuxOptions} from "./container";
 import {PersistentVolumeSource} from "./persistentvolume";
+import {ObjectMeta} from "../../meta/v1";
 
 export interface Pod {
     metadata: ObjectMeta;

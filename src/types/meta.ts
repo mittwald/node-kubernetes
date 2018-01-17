@@ -1,9 +1,4 @@
-export interface ObjectMeta {
-    name: string;
-    namespace?: string;
-    labels?: { [key: string]: string };
-    annotations?: { [key: string]: string };
-}
+import * as metav1 from "./meta/v1";
 
 export interface Resource<K = string, V = "v1"> {
     kind: K;
@@ -12,7 +7,7 @@ export interface Resource<K = string, V = "v1"> {
 
 export type ResourceList<R, K = string, V = "v1"> = Resource<K, V> & { items: null | R[] };
 
-export interface MetadataObject { metadata: ObjectMeta; }
+export interface MetadataObject<M = metav1.ObjectMeta> { metadata: M; }
 export type APIObject<K = string, V = "v1"> = Resource<K, V> & MetadataObject;
 export type InputAPIObject<K = string, V = "v1"> = Partial<Resource<K, V>> & MetadataObject;
 
@@ -48,10 +43,6 @@ export interface APIResourceList {
         verbs: string[];
         shortNames?: string[];
     }>;
-}
-
-export interface LabelSelector {
-    matchLabels?: {[l: string]: string};
 }
 
 export interface LocalObjectReference {

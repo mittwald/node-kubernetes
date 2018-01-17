@@ -6,6 +6,7 @@ export interface CoreV1API {
     configMaps(): INamespacedResourceClient<corev1.ConfigMap, "ConfigMap", "v1">;
     endpoints(): INamespacedResourceClient<corev1.Endpoint, "Endpoint", "v1">;
     namespaces(): IResourceClient<corev1.Namespace, "Namespace", "v1">;
+    nodes(): IResourceClient<corev1.Node, "Node", "v1">;
     persistentVolumes(): IResourceClient<corev1.PersistentVolume, "PersistentVolume", "v1">;
     persistentVolumeClaims(): INamespacedResourceClient<corev1.PersistentVolumeClaim, "PersistentVolumeClaim", "v1">;
     services(): INamespacedResourceClient<corev1.Service, "Service", "v1">;

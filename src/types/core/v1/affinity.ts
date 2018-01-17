@@ -1,5 +1,5 @@
-import {NodeSelector, NodeSelectorTerm} from "./node";
-import {LabelSelector} from "../../meta";
+import {NodeSelector, NodeSelectorTerm} from "./nodeselector";
+import {LabelSelector} from "../../meta/v1";
 
 export interface PreferredSchedulingTerm {
     preference: NodeSelectorTerm;

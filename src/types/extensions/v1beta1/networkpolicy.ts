@@ -1,4 +1,4 @@
-import {LabelSelector, ObjectMeta} from "../../meta";
+import {LabelSelector, ObjectMeta} from "../../meta/v1";
 
 export interface NetworkPolicy {
     metadata: ObjectMeta;

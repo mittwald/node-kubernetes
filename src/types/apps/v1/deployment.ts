@@ -1,10 +1,6 @@
 import {PodTemplateSpec} from "../../core/v1";
 import {LabelSelector, ObjectMeta} from "../../meta/v1";
 
-export interface RollbackConfig {
-    revision: number;
-}
-
 export interface DeploymentStrategy {
     type?: "Recreate"|"RollingUpdate";
     rollingUpdate?: {
@@ -19,7 +15,6 @@ export interface DeploymentSpec {
     progressDeadlineSeconds?: number;
     replicas?: number;
     revisionHistoryLimit?: number;
-    rollbackTo?: RollbackConfig;
     selector?: LabelSelector;
     strategy?: DeploymentStrategy;
     template: PodTemplateSpec;

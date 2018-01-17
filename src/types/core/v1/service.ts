@@ -1,4 +1,5 @@
-import {ObjectMeta, ResourceList} from "../../meta";
+import {ResourceList} from "../../meta";
+import {ObjectMeta} from "../../meta/v1";
 
 export interface ServiceSpecClusterIP {
     type?: "ClusterIP";

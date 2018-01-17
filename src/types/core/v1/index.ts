@@ -7,6 +7,7 @@ export * from "./container";
 export * from "./endpoint";
 export * from "./namespace";
 export * from "./node";
+export * from "./nodeselector";
 export * from "./persistentvolume";
 export * from "./persistentvolumeclaim";
 export * from "./pod";

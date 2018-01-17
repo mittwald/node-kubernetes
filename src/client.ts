@@ -1,8 +1,7 @@
 import * as request from "request";
 import {IKubernetesClientConfig} from "./config";
-import {isStatus} from "./types";
 import {LabelSelector, labelSelectorToQueryString} from "./label";
-import {WatchEvent} from "./types/meta";
+import {isStatus, WatchEvent} from "./types/meta";
 
 export type RequestMethod = "GET"|"POST"|"PUT"|"PATCH"|"DELETE";
 

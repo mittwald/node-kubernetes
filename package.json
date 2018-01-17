@@ -1,10 +1,11 @@
 {
   "name": "@mittwald/kubernetes",
-  "version": "1.0.0",
   "description": "Kubernetes client library",
   "main": "index.js",
   "typings": "index.d.ts",
   "scripts": {
+    "generate": "yarn generate:index",
+    "generate:index": "node scripts/build-index.js",
     "test:jest": "jest --verbose -w 1",
     "test:compile": "tsc -p tsconfig.test.json",
     "test": "yarn test:jest; yarn test:compile",

@@ -1,5 +1,5 @@
+import {PodTemplateSpec} from "../../core/v1/pod";
 import {LabelSelector, ObjectMeta} from "../../meta/v1";
-import {PodTemplateSpec} from "../../core/v1";
 
 export interface ReplicaSetSpec {
     minReadySeconds?: number;

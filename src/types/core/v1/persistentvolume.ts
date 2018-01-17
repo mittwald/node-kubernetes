@@ -1,5 +1,4 @@
-import {LabelSelector, MetadataObject, ObjectMeta, ResourceList} from "../../meta";
-import {ResourceRequirements} from "./container";
+import {MetadataObject, ResourceList} from "../../meta";
 
 export type AccessMode = "ReadWriteOnce"|"ReadOnlyMany"|"ReadWriteMany";
 

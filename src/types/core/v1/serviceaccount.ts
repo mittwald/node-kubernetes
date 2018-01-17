@@ -1,4 +1,4 @@
-import {ObjectMeta} from "../../meta";
+import {ObjectMeta} from "../../meta/v1";
 import {Secret} from "./secret";
 
 export interface ServiceAccount {

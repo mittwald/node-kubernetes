@@ -1,7 +1,7 @@
 import * as request from "request";
 import * as fs from "fs";
 import * as yaml from "yamljs";
-import {Config} from "./types";
+import {Config} from "./types/config";
 
 export interface IKubernetesClientConfig {
 

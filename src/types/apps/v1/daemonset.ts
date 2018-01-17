@@ -1,6 +1,6 @@
-import {ResourceList} from "../../meta";
-import {LabelSelector, ObjectMeta} from "../../meta/v1";
 import {PodTemplateSpec} from "../../core/v1";
+import {LabelSelector, ObjectMeta} from "../../meta/v1";
+import {ResourceList} from "../../meta";
 
 export interface OnDeleteDaemonSetUpdateStrategy {
     type: "OnDelete";
@@ -17,9 +17,9 @@ export type DaemonSetUpdateStrategy = OnDeleteDaemonSetUpdateStrategy | RollingU
 
 export interface DaemonSetSpec {
     minReadySeconds?: number;
+    revisionHistoryLimit?: number;
     selector?: LabelSelector;
     template: PodTemplateSpec;
-    readonly templateGeneration?: number;
     updateStrategy?: DaemonSetUpdateStrategy;
 }
 
@@ -28,4 +28,4 @@ export interface DaemonSet {
     spec: DaemonSetSpec;
 }
 
-export type DaemonSetList = ResourceList<DaemonSet, "DaemonSetList", "extensions/v1beta1">;
+export type DaemonSetList = ResourceList<DaemonSet, "DaemonSetList", "apps/v1">;

@@ -1,4 +1,5 @@
-import {ObjectMeta, ObjectReference, ResourceList} from "../../meta";
+import {ObjectReference, ResourceList} from "../../meta";
+import {ObjectMeta} from "../../meta/v1";
 
 export interface EndpointAddress {
     hostname?: string;

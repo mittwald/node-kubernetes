@@ -92,6 +92,7 @@ This library supports a reasonable subset of Kubernetes resources
 (these were implemented on an as-needed basis). Feel free to open a
 new issue or pull request to add support for additional API objects.
 
+[options="compact"]
 - core/v1
     ** pods
     ** configMaps

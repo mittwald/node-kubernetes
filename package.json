@@ -19,6 +19,7 @@
     "@types/lodash": "^4.14.86",
     "@types/request": "^2.0.8",
     "@types/yamljs": "^0.2.30",
+    "bottleneck": "^1.16.0",
     "lodash": "^4.17.4",
     "request": "^2.83.0",
     "yamljs": "^0.3.0"

@@ -34,6 +34,22 @@ api.core().v1().pods.namespace("default").list().then(pods => {
 });
 ```
 
+## Rate-limiting API access
+
+```typescript
+import {
+    InClusterConfig, 
+    KubernetesRESTClient, 
+    RatelimitingKubernetesRESTClient, 
+    KubernetesAPI,
+} from "@mittwald/kubernetes";
+
+const config = new InClusterConfig();
+const client = new KubernetesRESTClient(config);
+const limitedClient = new RatelimitingKubernetesRESTClient(client);
+const api = new KubernetesAPI(limitedClient);
+```
+
 ## Watching resources
 
 ```typescript
@@ -77,8 +93,8 @@ api.core().v1().pods.namespace("default").watch({"some-label": "foo"}, ev => {
     - clusterRoleBindings
     - roles
     - roleBindings
-    
+
 ## References
 
-- https://kubernetes.io/docs/api-reference/v1.6
+- https://kubernetes.io/docs/api-reference/v1.9
 - https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md

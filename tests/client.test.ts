@@ -1,6 +1,5 @@
-import {KubernetesRESTClient} from "../src/client";
+import {GenericClientConfig, KubernetesRESTClient} from "../src";
 import * as nock from "nock";
-import {GenericClientConfig} from "../src/config";
 
 describe(KubernetesRESTClient.name, () => {
     let scope: nock.Scope;

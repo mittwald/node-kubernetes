@@ -1,5 +1,4 @@
-import {Service} from "../src/types/service";
-import {StatefulSet} from "../src/types/statefulset";
+import {StatefulSet} from "../src/types/apps/v1beta1";
 
 const statefulsetWithoutVolume: StatefulSet = {
     metadata: {

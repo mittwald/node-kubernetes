@@ -1,4 +1,4 @@
-import {Service} from "../src/types/service";
+import {Service} from "../src/types/core/v1";
 
 const clusterIPServiceWithDefaults: Service = {
     metadata: {

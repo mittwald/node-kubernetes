@@ -1,14 +1,11 @@
 import * as nock from "nock";
-import {IKubernetesRESTClient, KubernetesRESTClient} from "../src/client";
-import {GenericClientConfig} from "../src/config";
-import {IKubernetesAPI, KubernetesAPI} from "../src/api";
-import {Pod, PodList} from "../src/types/pod";
-import {ServiceList} from "../src/types/service";
+import {GenericClientConfig, IKubernetesRESTClient, KubernetesAPI, KubernetesRESTClient, CoreV1API} from "../src";
+import {Pod, PodList, ServiceList} from "../src/types/core/v1";
 
 describe("Kubernetes API client", () => {
     let scope: nock.Scope;
     let client: IKubernetesRESTClient;
-    let api: IKubernetesAPI;
+    let api: CoreV1API;
 
     beforeEach(() => {
         scope = nock("https://kubernetes");
@@ -19,7 +16,7 @@ describe("Kubernetes API client", () => {
             "contexts": [{name: "foo", context: {user: "foo", cluster: "foo"}}],
             "current-context": "foo",
         }));
-        api = new KubernetesAPI(client);
+        api = new KubernetesAPI(client).core().v1();
     });
 
     afterEach(() => {

@@ -1,30 +1,56 @@
-# Kubernetes client for Node.JS
+= Kubernetes client for Node.JS
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+:toc:
+:toc-placement!:
+:toc-title:
 
-## Setup
+image:https://travis-ci.org/mittwald/node-kubernetes.svg?branch=master[link="https://travis-ci.org/mittwald/node-kubernetes",Build status]
+
+[discrete]
+== Contents
+
+toc::[]
+
+== Installation
+
+You can install this package via NPM:
+
+    $ npm install @mittwald/kubernetes
+
+== Usage
+
+=== Setup
 
 External configuration using a `kubeconfig` file:
 
-```typescript
+[source,typescript]
+----
 import {FileBasedConfig, KubernetesRESTClient, KubernetesAPI} from "@mittwald/kubernetes";
 
 const config = new FileBasedConfig("/home/mhelmich/.kube/config");
 const client = new KubernetesRESTClient(config);
 const api = new KubernetesAPI(client);
-```
+----
 
 Internal configuration (when the client is running within a Kubernetes cluster):
 
-```typescript
+[source,typescript]
+----
 import {InClusterConfig, KubernetesRESTClient, KubernetesAPI} from "@mittwald/kubernetes";
 
 const config = new InClusterConfig();
 const client = new KubernetesRESTClient(config);
 const api = new KubernetesAPI(client);
-```
+----
 
-## Usage
+=== General usage
 
-```typescript
+[source,typescript]
+----
 api.core().v1().pods.namespace("default").list().then(pods => {
     console.log("Found " + pods.length + " Pods:");
 
@@ -32,11 +58,12 @@ api.core().v1().pods.namespace("default").list().then(pods => {
         console.log(pod.metadata.name);
     });
 });
-```
+----
 
-## Rate-limiting API access
+=== Rate-limiting API access
 
-```typescript
+[source,typescript]
+----
 import {
     InClusterConfig, 
     KubernetesRESTClient, 
@@ -48,17 +75,18 @@ const config = new InClusterConfig();
 const client = new KubernetesRESTClient(config);
 const limitedClient = new RatelimitingKubernetesRESTClient(client);
 const api = new KubernetesAPI(limitedClient);
-```
+----
 
-## Watching resources
+=== Watching resources
 
-```typescript
+[source,typescript]
+----
 api.core().v1().pods.namespace("default").watch({"some-label": "foo"}, ev => {
     console.log(`Pod: ${ev.type}: ${ev.object}`);    
 });
-```
+----
 
-## Supported resources
+== Supported resources
 
 This library supports a reasonable subset of Kubernetes resources
 (these were implemented on an as-needed basis). Feel free to open a
@@ -98,7 +126,7 @@ new issue or pull request to add support for additional API objects.
     - roles
     - roleBindings
 
-## References
+== References
 
 - https://kubernetes.io/docs/api-reference/v1.9
 - https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md

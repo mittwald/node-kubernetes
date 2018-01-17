@@ -60,6 +60,10 @@ api.core().v1().pods.namespace("default").watch({"some-label": "foo"}, ev => {
 
 ## Supported resources
 
+This library supports a reasonable subset of Kubernetes resources
+(these were implemented on an as-needed basis). Feel free to open a
+new issue or pull request to add support for additional API objects.
+
 - core/v1
     - pods
     - configMaps

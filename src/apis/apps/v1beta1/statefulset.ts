@@ -1,8 +1,8 @@
 import {NamespacedResourceClient} from "../../../resource";
 import {IKubernetesRESTClient} from "../../../client";
 import {LabelSelector} from "../../../label";
-import {StatefulSet} from "../../../types/apps/v1beta1/statefulset";
-import {DeleteOptions} from "../../../types/meta";
+import {StatefulSet} from "../../../types/apps/v1beta1";
+import {DeleteOptions} from "../../../types/meta/v1";
 
 export class StatefulSetResourceClient extends NamespacedResourceClient<StatefulSet, "StatefulSet", "apps/v1beta1"> {
 

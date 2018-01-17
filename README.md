@@ -25,7 +25,7 @@ const api = new KubernetesAPI(client);
 ## Usage
 
 ```typescript
-api.pods.namespace("default").list().then(pods => {
+api.core().v1().pods.namespace("default").list().then(pods => {
     console.log("Found " + pods.length + " Pods:");
 
     pods.forEach(pod => {
@@ -37,40 +37,47 @@ api.pods.namespace("default").list().then(pods => {
 ## Watching resources
 
 ```typescript
-api.pods.namespace("default").watch({"some-label": "foo"}, ev => {
+api.core().v1().pods.namespace("default").watch({"some-label": "foo"}, ev => {
     console.log(`Pod: ${ev.type}: ${ev.object}`);    
 });
 ```
 
-## Supported Resources
+## Supported resources
 
-Supported:
-
-- ConfigMaps
-- DaemonSets
-- Deployments
-- Endpoints
-- Ingresses
-- Jobs
-- Namespaces
-- PersistentVolumes
-- PersistentVolumeClaims
-- Pods
-- ReplicaSets
-- Secrets
-- Services
-- StatefulSets
-
-Todo:
-
-- Events
-- HorizontalPodAutoscalers
-- NetworkPolicies
-- PodDisruptionBudgets
-- ReplicationControllers
-- ResourceQuotas
-- StorageClasses
-
+- core/v1
+    - pods
+    - configMaps
+    - endpoints
+    - namespaces
+    - nodes
+    - persistentVolumes
+    - persistentVolumeClaims
+    - services
+    - secrets
+    - serviceAccounts
+- apps/v1
+    - daemonSets
+    - deployments
+    - replicaSets
+    - statefulSets
+- apps/v1beta1
+    - deployments
+    - statefulSets
+- batch/v1
+    - jobs
+- batch/v1beta1
+    - cronJobs
+- extensions/v1beta1
+    - daemonSets
+    - ingresses
+    - networkPolicies
+    - replicaSets
+- rbac/v1
+    - clusterRoles
+    - clusterRoleBindings
+    - roles
+    - roleBindings
+    
 ## References
 
 - https://kubernetes.io/docs/api-reference/v1.6

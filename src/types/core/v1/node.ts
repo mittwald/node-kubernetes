@@ -1,5 +1,5 @@
-import {ObjectReference} from "../../meta";
 import {ObjectMeta} from "../../meta/v1";
+import {ObjectReference} from "./objectreference";
 
 export interface NodeSpec {
     configSource: NodeConfigSource;

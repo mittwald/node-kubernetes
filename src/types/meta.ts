@@ -44,26 +44,3 @@ export interface APIResourceList {
         shortNames?: string[];
     }>;
 }
-
-export interface LocalObjectReference {
-    name: string;
-}
-
-export interface WatchEvent<O> {
-    type: "ADDED"|"MODIFIED"|"DELETED"|"ERROR";
-    object: O;
-}
-
-export interface ObjectReference {
-    fieldPath?: string;
-    kind: string;
-    name: string;
-    namespace: string;
-    resourceVersion: string;
-    uid: string;
-}
-
-export interface DeleteOptions {
-    gracePeriodSeconds?: number;
-    orphanDependents?: boolean;
-}

@@ -1,5 +1,6 @@
 import {IKubernetesRESTClient} from "./client";
-import {APIObject, DeleteOptions, MetadataObject, WatchEvent} from "./types/meta";
+import {APIObject, MetadataObject} from "./types/meta";
+import {DeleteOptions, WatchEvent} from "./types/meta/v1";
 import {LabelSelector} from "./label";
 
 export interface IResourceClient<R extends MetadataObject, K, V, O extends R = R> {

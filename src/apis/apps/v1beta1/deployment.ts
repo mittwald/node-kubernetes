@@ -1,8 +1,8 @@
 import {NamespacedResourceClient} from "../../../resource";
-import {Deployment} from "../../../types/apps/v1beta1/deployment";
+import {Deployment} from "../../../types/apps/v1beta1";
 import {IKubernetesRESTClient} from "../../../client";
 import {LabelSelector} from "../../../label";
-import {DeleteOptions} from "../../../types/meta";
+import {DeleteOptions} from "../../../types/meta/v1";
 
 export class DeploymentResourceClient extends NamespacedResourceClient<Deployment, "Deployment", "apps/v1beta1"> {
 

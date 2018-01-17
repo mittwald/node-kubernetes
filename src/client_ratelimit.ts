@@ -1,7 +1,7 @@
 import {IKubernetesRESTClient} from "./client";
 import {LabelSelector} from "./label";
-import {WatchEvent} from "./types";
 import Bottleneck from "bottleneck";
+import {WatchEvent} from "./types/meta/v1";
 
 export class RatelimitedKubernetesRESTClient implements IKubernetesRESTClient {
     private limiter: Bottleneck;

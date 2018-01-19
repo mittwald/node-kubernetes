@@ -1,56 +1,51 @@
-= Kubernetes client for Node.JS
-:tip-caption: :bulb:
-:note-caption: :information_source:
-:important-caption: :heavy_exclamation_mark:
-:caution-caption: :fire:
-:warning-caption: :warning:
-:toc:
-:toc-placement!:
-:toc-title:
+# Kubernetes client for Node.JS
 
-image:https://travis-ci.org/mittwald/node-kubernetes.svg?branch=master[link="https://travis-ci.org/mittwald/node-kubernetes",Build status]
+[![Build Status](https://travis-ci.org/mittwald/node-kubernetes.svg?branch=master)](https://travis-ci.org/mittwald/node-kubernetes)
 
-[discrete]
-== Contents
+## Contents
 
-toc::[]
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Setup](#setup)
+  - [General usage](#general-usage)
+  - [Rate-limiting API access](#rate-limiting-api-access)
+  - [Watching resources](#watching-resources)
+- [Supported resources](#supported-resources)
+- [References](#references)
 
-== Installation
+## Installation
 
 You can install this package via NPM:
 
     $ npm install @mittwald/kubernetes
 
-== Usage
+## Usage
 
-=== Setup
+### Setup
 
 External configuration using a `kubeconfig` file:
 
-[source,typescript]
-----
+```typescript
 import {FileBasedConfig, KubernetesRESTClient, KubernetesAPI} from "@mittwald/kubernetes";
 
 const config = new FileBasedConfig("/home/mhelmich/.kube/config");
 const client = new KubernetesRESTClient(config);
 const api = new KubernetesAPI(client);
-----
+```
 
 Internal configuration (when the client is running within a Kubernetes cluster):
 
-[source,typescript]
-----
+```typescript
 import {InClusterConfig, KubernetesRESTClient, KubernetesAPI} from "@mittwald/kubernetes";
 
 const config = new InClusterConfig();
 const client = new KubernetesRESTClient(config);
 const api = new KubernetesAPI(client);
-----
+```
 
-=== General usage
+### General usage
 
-[source,typescript]
-----
+```typescript
 api.core().v1().pods.namespace("default").list().then(pods => {
     console.log("Found " + pods.length + " Pods:");
 
@@ -58,12 +53,11 @@ api.core().v1().pods.namespace("default").list().then(pods => {
         console.log(pod.metadata.name);
     });
 });
-----
+```
 
-=== Rate-limiting API access
+### Rate-limiting API access
 
-[source,typescript]
-----
+```typescript
 import {
     InClusterConfig, 
     KubernetesRESTClient, 
@@ -75,59 +69,57 @@ const config = new InClusterConfig();
 const client = new KubernetesRESTClient(config);
 const limitedClient = new RatelimitingKubernetesRESTClient(client);
 const api = new KubernetesAPI(limitedClient);
-----
+```
 
-=== Watching resources
+### Watching resources
 
-[source,typescript]
-----
+```typescript
 api.core().v1().pods.namespace("default").watch({"some-label": "foo"}, ev => {
     console.log(`Pod: ${ev.type}: ${ev.object}`);    
 });
-----
+```
 
-== Supported resources
+## Supported resources
 
 This library supports a reasonable subset of Kubernetes resources
 (these were implemented on an as-needed basis). Feel free to open a
 new issue or pull request to add support for additional API objects.
 
-[options="compact"]
 - core/v1
-    ** pods
-    ** configMaps
-    ** endpoints
-    ** namespaces
-    ** nodes
-    ** persistentVolumes
-    ** persistentVolumeClaims
-    ** services
-    ** secrets
-    ** serviceAccounts
+    - pods
+    - configMaps
+    - endpoints
+    - namespaces
+    - nodes
+    - persistentVolumes
+    - persistentVolumeClaims
+    - services
+    - secrets
+    - serviceAccounts
 - apps/v1
-    ** daemonSets
-    ** deployments
-    ** replicaSets
-    ** statefulSets
+    - daemonSets
+    - deployments
+    - replicaSets
+    - statefulSets
 - apps/v1beta1
-    ** deployments
-    ** statefulSets
+    - deployments
+    - statefulSets
 - batch/v1
-    ** jobs
+    - jobs
 - batch/v1beta1
-    ** cronJobs
+    - cronJobs
 - extensions/v1beta1
-    ** daemonSets
-    ** ingresses
-    ** networkPolicies
-    ** replicaSets
+    - daemonSets
+    - ingresses
+    - networkPolicies
+    - replicaSets
 - rbac/v1
-    ** clusterRoles
-    ** clusterRoleBindings
-    ** roles
-    ** roleBindings
+    - clusterRoles
+    - clusterRoleBindings
+    - roles
+    - roleBindings
 
-== References
+## References
 
 - https://kubernetes.io/docs/api-reference/v1.9
 - https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md

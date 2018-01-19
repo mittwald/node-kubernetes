@@ -11,11 +11,11 @@ script:
 before_deploy:
 - cp package.json dist/
 - cd dist
-deploy:
-  provider: npm
-  email: m.helmich@mittwald.de
-  on:
-    skip_cleanup: true
-    tags: true
-  api_key:
-    secure: u3EIglIvGEAiLfpuub0Ledo1Dzo+rgsMaUylD/ZEz3oeQ+NenSchl/5qGiFXVa+KY3l836tofFpqgTysQppjeMSqDnbKrjffmADa41iaD8NRnP0xeD8iChm9YBPBH7e9Mz9rL181463ctspMCUZu0s0+UrswX09m5MxEsHhYa+sG4jdvNpouybTxy2pOIEcesMADmknbmabXWZlrwK5PPGT+g61SdGUAXQZAYNUbHXmhEvKee/JmvCZyCv/0JUr4RQ4TQvWCKY1mm7zDzdhwXoN6qNYHMIU8UV9i8flzyUGXbhXSljxGEWH0hFQ/I+SIrhMbR6XtdsQc3M7F0FXYe8EK9NOXKO8Sl4Pf6ws1Aw2sp0CWGN4DnLMYL1DwJId4vtzy84RuY1u8iubr6P3cSeQUB8Clh1a4BC2OnMQYqmva/5cKfBCh3TFRTe/8uA51ukPNpUtZQ/msIpgxM0fZfGNp/hqdmWInyj+PcCh5j7fl8hSQhWbbV3mVGbp6a5NJfWLyw7ttODxCo2Bks3Rh3UyghsDy6awpo3tf+c89Rm6309Ee4x5fX3oq7PIERxCxA2NlIsJTDwAQal+G1Ax59eXVkDxFbpac1iQ1JOqyJGu22nf5QX3yF1bCJRH2apnH7Lo94kb1jF+K4unsTrqsv6Y/PurSfpUyivmunS1mY3I=
+#deploy:
+#  provider: npm
+#  email: m.helmich@mittwald.de
+#  on:
+#    skip_cleanup: true
+#    tags: true
+#  api_key:
+#    secure: u3EIglIvGEAiLfpuub0Ledo1Dzo+rgsMaUylD/ZEz3oeQ+NenSchl/5qGiFXVa+KY3l836tofFpqgTysQppjeMSqDnbKrjffmADa41iaD8NRnP0xeD8iChm9YBPBH7e9Mz9rL181463ctspMCUZu0s0+UrswX09m5MxEsHhYa+sG4jdvNpouybTxy2pOIEcesMADmknbmabXWZlrwK5PPGT+g61SdGUAXQZAYNUbHXmhEvKee/JmvCZyCv/0JUr4RQ4TQvWCKY1mm7zDzdhwXoN6qNYHMIU8UV9i8flzyUGXbhXSljxGEWH0hFQ/I+SIrhMbR6XtdsQc3M7F0FXYe8EK9NOXKO8Sl4Pf6ws1Aw2sp0CWGN4DnLMYL1DwJId4vtzy84RuY1u8iubr6P3cSeQUB8Clh1a4BC2OnMQYqmva/5cKfBCh3TFRTe/8uA51ukPNpUtZQ/msIpgxM0fZfGNp/hqdmWInyj+PcCh5j7fl8hSQhWbbV3mVGbp6a5NJfWLyw7ttODxCo2Bks3Rh3UyghsDy6awpo3tf+c89Rm6309Ee4x5fX3oq7PIERxCxA2NlIsJTDwAQal+G1Ax59eXVkDxFbpac1iQ1JOqyJGu22nf5QX3yF1bCJRH2apnH7Lo94kb1jF+K4unsTrqsv6Y/PurSfpUyivmunS1mY3I=

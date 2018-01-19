@@ -1,5 +1,6 @@
 # Kubernetes client for Node.JS
 
+[![npm version](https://badge.fury.io/js/%40mittwald%2Fkubernetes.svg)](https://www.npmjs.com/package/@mittwald/kubernetes)
 [![Build Status](https://travis-ci.org/mittwald/node-kubernetes.svg?branch=master)](https://travis-ci.org/mittwald/node-kubernetes)
 
 ## Contents

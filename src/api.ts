@@ -2,6 +2,7 @@ import {IKubernetesRESTClient} from "./client";
 import {INamespacedResourceClient, IResourceClient, NamespacedResourceClient, ResourceClient} from "./resource";
 import * as corev1 from "./types/core/v1";
 import * as resourceAppsV1beta1 from "./apis/apps/v1beta1";
+import * as resourceExtensionsV1beta1 from "./apis/extensions/v1beta1";
 import {AppsAPI, BatchAPI, CoreAPI, ExtensionsAPI, RBACAPI} from "./apis";
 import {MetadataObject} from "./types/meta";
 
@@ -77,6 +78,7 @@ export class KubernetesAPI implements IKubernetesAPI {
         return {
             v1beta1: () => ({
                 daemonSets: () => this.nc("/apis/extensions/v1beta1", "/daemonsets"),
+                deployments: () => new resourceExtensionsV1beta1.DeploymentResourceClient(this.restClient),
                 ingresses: () => this.nc("/apis/extensions/v1beta1", "/ingresses"),
                 networkPolicies: () => this.nc("/apis/extensions/v1beta1", "/networkpolicies"),
                 replicaSets: () => this.nc("/apis/extensions/v1beta1", "/replicasets"),

@@ -2,6 +2,7 @@
 // DO NOT MODIFY
 
 export * from "./daemonset";
+export * from "./deployment";
 export * from "./ingress";
 export * from "./networkpolicy";
 export * from "./replicaset";

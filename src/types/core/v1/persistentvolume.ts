@@ -1,4 +1,5 @@
 import {MetadataObject, ResourceList} from "../../meta";
+import {FlexVolumeSource} from "../../rook.io/v1alpha1/volume"
 
 export type AccessMode = "ReadWriteOnce"|"ReadOnlyMany"|"ReadWriteMany";
 
@@ -38,6 +39,7 @@ export type PersistentVolumeSource =
     {awsElasticBlockStore: AWSElasticBlockStoreVolumeSource} |
     {hostPath: HostPathVolumeSource} |
     {nfs: NFSVolumeSource} |
+    {flexVolume: FlexVolumeSource} |
     {quobyte: QuobyteVolumeSource};
 
 export type PersistentVolumeSpec = PersistentVolumeSpecBase & PersistentVolumeSource;

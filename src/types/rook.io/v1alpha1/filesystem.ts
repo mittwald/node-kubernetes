@@ -22,10 +22,12 @@ export interface PoolSpec {
 }
 
 export interface Placement {
-    nodeAffinity: NodeAffinity;
-    podAffinity: PodAffinity;
-    podAntiAffinity: PodAntiAffinity;
-    tolerations: Toleration[];
+    kind: string;
+    apiVersion: string;
+    nodeAffinity?: NodeAffinity;
+    podAffinity?: PodAffinity;
+    podAntiAffinity?: PodAntiAffinity;
+    tolerations?: Toleration[];
 }
 
 export interface MetadataServerSpec {

@@ -1,4 +1,5 @@
 import {MetadataObject, ResourceList} from "../../meta";
+import {LocalObjectReference} from "./localobjectreference";
 
 export type AccessMode = "ReadWriteOnce"|"ReadOnlyMany"|"ReadWriteMany";
 
@@ -34,11 +35,20 @@ export interface QuobyteVolumeSource {
     volume: string;
 }
 
+export interface FlexVolumeSource {
+    driver: string;
+    fsType?: string;
+    secretRef?: LocalObjectReference;
+    readOnly?: boolean;
+    options?: {[name: string]: string};
+}
+
 export type PersistentVolumeSource =
     {awsElasticBlockStore: AWSElasticBlockStoreVolumeSource} |
     {hostPath: HostPathVolumeSource} |
     {nfs: NFSVolumeSource} |
-    {quobyte: QuobyteVolumeSource};
+    {quobyte: QuobyteVolumeSource} |
+    {flexVolume: FlexVolumeSource};
 
 export type PersistentVolumeSpec = PersistentVolumeSpecBase & PersistentVolumeSource;
 

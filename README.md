@@ -11,6 +11,7 @@
   - [General usage](#general-usage)
   - [Rate-limiting API access](#rate-limiting-api-access)
   - [Watching resources](#watching-resources)
+  - [Accessing CRDs](#accessing-crds)
 - [Supported resources](#supported-resources)
 - [References](#references)
 
@@ -78,6 +79,20 @@ const api = new KubernetesAPI(limitedClient);
 api.core().v1().pods.namespace("default").watch({"some-label": "foo"}, ev => {
     console.log(`Pod: ${ev.type}: ${ev.object}`);    
 });
+```
+
+### Accessing CRDs
+
+If you have a package that offers a client for _Custom Resource Definitions_
+(take a look at the [@mittwald/kubernetes-rook](https://github.com/mittwald/node-kubernetes-rook)
+package as an example), you can use the `extend` method to add the respective
+API client:
+
+```typescript
+import {RookCustomResourceAPI} from "@mittwald/kubernetes-rook";
+
+// ...
+let extendedAPI = api.extend("rook", new RookCustomResourceAPI(client));
 ```
 
 ## Supported resources

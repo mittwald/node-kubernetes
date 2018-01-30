@@ -7,6 +7,7 @@ import {AppsAPI, BatchAPI, CoreAPI, ExtensionsAPI, RBACAPI} from "./apis";
 import {MetadataObject} from "./types/meta";
 
 export interface IKubernetesAPI {
+    extend<C>(name: string, customResourceAPI: C): this & C;
     core(): CoreAPI;
     apps(): AppsAPI;
     batch(): BatchAPI;
@@ -25,6 +26,12 @@ export class KubernetesAPI implements IKubernetesAPI {
 
     private c<R extends MetadataObject, K, V, O extends R = R>(apiBaseURL: string, resourceBaseURL: string): IResourceClient<R, K, V, O> {
         return new ResourceClient(this.restClient, apiBaseURL, resourceBaseURL);
+    }
+
+    public extend<C>(name: string, customResourceAPI: C): this & C {
+        (this as any)[name] = () => (customResourceAPI as any)[name]();
+
+        return this as any;
     }
 
     public core(): CoreAPI {

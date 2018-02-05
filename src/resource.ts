@@ -15,8 +15,54 @@ export interface IResourceClient<R extends MetadataObject, K, V, O extends R = R
 }
 
 export interface INamespacedResourceClient<R extends MetadataObject, K, V, O extends R = R> extends IResourceClient<R, K, V, O> {
-    namespace(ns: string): IResourceClient<R, K, V, O>;
-    allNamespaces(): IResourceClient<R, K, V, O>;
+    namespace(ns: string): INamespacedResourceClient<R, K, V, O>;
+    allNamespaces(): INamespacedResourceClient<R, K, V, O>;
+}
+
+export class CustomResourceClient<R extends MetadataObject, K, V, O extends R = R> implements INamespacedResourceClient<R, K, V, O> {
+    public constructor(private inner: INamespacedResourceClient<R, K, V, O>,
+                       private kind: K,
+                       private apiVersion: V) {}
+
+    public list(labelSelector?: LabelSelector): Promise<Array<APIObject<K, V> & O>> {
+        return this.inner.list(labelSelector);
+    }
+
+    public get(name: string): Promise<(APIObject<K, V> & O) | undefined> {
+        return this.inner.get(name);
+    }
+
+    public apply(resource: R): Promise<APIObject<K, V> & O> {
+        return this.inner.apply({...(resource as any), kind: this.kind, apiVersion: this.apiVersion});
+    }
+
+    public put(resource: R): Promise<APIObject<K, V> & O> {
+        return this.inner.put({...(resource as any), kind: this.kind, apiVersion: this.apiVersion});
+    }
+
+    public post(resource: R): Promise<APIObject<K, V> & O> {
+        return this.inner.post({...(resource as any), kind: this.kind, apiVersion: this.apiVersion});
+    }
+
+    public delete(resourceOrName: string | R, deleteOptions?: DeleteOptions): Promise<void> {
+        return this.inner.delete(resourceOrName, deleteOptions);
+    }
+
+    public deleteMany(labelSelector: LabelSelector): Promise<void> {
+        return this.inner.deleteMany(labelSelector);
+    }
+
+    public watch(labelSelector: LabelSelector, handler: (event: WatchEvent<O>) => any, errorHandler?: (error: any) => any): Promise<void> {
+        return this.inner.watch(labelSelector, handler, errorHandler);
+    }
+
+    public namespace(ns: string): INamespacedResourceClient<R, K, V, O> {
+        return new CustomResourceClient<R, K, V, O>(this.inner.namespace(ns), this.kind, this.apiVersion);
+    }
+
+    public allNamespaces(): INamespacedResourceClient<R, K, V, O> {
+        return new CustomResourceClient<R, K, V, O>(this.inner.allNamespaces(), this.kind, this.apiVersion);
+    }
 }
 
 export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> implements IResourceClient<R, K, V, O> {
@@ -121,13 +167,13 @@ export class NamespacedResourceClient<R extends MetadataObject, K, V, O extends 
         return this.apiBaseURL + "/" + this.resourceBaseURL + "/" + r.metadata.name;
     }
 
-    public namespace(ns: string): IResourceClient<R, K, V, O> {
+    public namespace(ns: string): INamespacedResourceClient<R, K, V, O> {
         const n = new NamespacedResourceClient<R, K, V, O>(this.client, this.apiBaseURL, this.resourceBaseURL, ns);
         n.supportsCollectionDeletion = this.supportsCollectionDeletion;
         return n;
     }
 
-    public allNamespaces(): IResourceClient<R, K, V, O> {
+    public allNamespaces(): INamespacedResourceClient<R, K, V, O> {
         const n = new NamespacedResourceClient<R, K, V, O>(this.client, this.apiBaseURL, this.resourceBaseURL);
         n.supportsCollectionDeletion = this.supportsCollectionDeletion;
         return n;

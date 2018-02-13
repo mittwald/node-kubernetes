@@ -11,7 +11,7 @@ export interface JobSpec {
     template: PodTemplateSpec;
 }
 
-export interface JobConditions {
+export interface JobCondition {
     lastProbeTime?: string;
     lastTransitionTime?: string;
     message?: string;
@@ -24,7 +24,7 @@ export interface JobStatus {
     active?: number;
     failed?: number;
     completionTime?: string;
-    conditions?: JobConditions[];
+    conditions?: JobCondition[];
     startTime?: string;
     succeeded?: number;
 }

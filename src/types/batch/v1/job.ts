@@ -11,9 +11,28 @@ export interface JobSpec {
     template: PodTemplateSpec;
 }
 
+export interface JobConditions {
+    lastProbeTime?: string;
+    lastTransitionTime?: string;
+    message?: string;
+    reason?: string;
+    status?: boolean | "Unknown";
+    type?: string;
+}
+
+export interface JobStatus {
+    active?: number;
+    failed?: number;
+    completionTime?: string;
+    conditions?: JobConditions[];
+    startTime?: string;
+    succeeded?: number;
+}
+
 export interface Job {
     metadata: ObjectMeta;
     spec: JobSpec;
+    status?: JobStatus;
 }
 
 export type JobList = ResourceList<Job, "Job", "batch/v1">;

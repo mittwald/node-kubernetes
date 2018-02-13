@@ -3,7 +3,7 @@ import * as batchv1 from "../types/batch/v1";
 import * as batchv1beta1 from "../types/batch/v1beta1";
 
 export interface BatchV1API {
-    jobs(): INamespacedResourceClient<batchv1.Job, "Job", "batch/v1">;
+    jobs(): INamespacedResourceClient<batchv1.Job, "Job", "batch/v1", batchv1.JobWithStatus>;
 }
 
 export interface BatchV1beta1API {

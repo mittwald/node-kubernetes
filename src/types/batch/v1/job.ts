@@ -21,18 +21,19 @@ export interface JobCondition {
 }
 
 export interface JobStatus {
-    active?: number;
-    failed?: number;
+    startTime: string;
+    active: number;
+    failed: number;
     completionTime?: string;
     conditions?: JobCondition[];
-    startTime?: string;
     succeeded?: number;
 }
 
 export interface Job {
     metadata: ObjectMeta;
     spec: JobSpec;
-    status?: JobStatus;
 }
+
+export type JobWithStatus = Job & {status: JobStatus};
 
 export type JobList = ResourceList<Job, "Job", "batch/v1">;

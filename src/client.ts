@@ -1,8 +1,10 @@
 import * as request from "request";
 import {IKubernetesClientConfig} from "./config";
 import {LabelSelector, labelSelectorToQueryString} from "./label";
-import {isStatus} from "./types/meta";
+import {isStatus, MetadataObject} from "./types/meta";
 import {WatchEvent} from "./types/meta/v1";
+
+const debug = require("debug")("k8s:client");
 
 export type RequestMethod = "GET"|"POST"|"PUT"|"PATCH"|"DELETE";
 
@@ -14,12 +16,21 @@ const defaultRESTClientOptions: IKubernetesRESTClientOptions = {
     debugFn: () => { return; },
 };
 
+export interface WatchOptions {
+    labelSelector?: LabelSelector;
+    resourceVersion?: number;
+}
+
+export interface WatchResult {
+    resourceVersion: number;
+}
+
 export interface IKubernetesRESTClient {
     post<R = any>(url: string, body: any): Promise<R>;
     put<R = any>(url: string, body: any): Promise<R>;
     delete<R = any>(url: string, labelSelector?: LabelSelector, queryParams?: {[k: string]: string}, body?: any): Promise<R>;
     get<R = any>(url: string, labelSelector?: LabelSelector): Promise<R|undefined>;
-    watch<R = any>(url: string, onUpdate: (o: WatchEvent<R>) => any, onError: (err: any) => any, labelSelector?: LabelSelector): Promise<void>;
+    watch<R extends MetadataObject = MetadataObject>(url: string, onUpdate: (o: WatchEvent<R>) => any, onError: (err: any) => any, opts?: WatchOptions): Promise<WatchResult>;
 }
 
 export class KubernetesRESTClient implements IKubernetesRESTClient {
@@ -85,7 +96,10 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
         return this.request<R>(url, body, "DELETE", opts);
     }
 
-    public watch<R = any>(url: string, onUpdate: (o: WatchEvent<R>) => any, onError: (err: any) => any, labelSelector?: LabelSelector): Promise<void> {
+    public watch<R extends MetadataObject = MetadataObject>(url: string,
+                                                            onUpdate: (o: WatchEvent<R>) => any,
+                                                            onError: (err: any) => any,
+                                                            watchOpts: WatchOptions = {}): Promise<WatchResult> {
         url = url.replace(/^\//, "");
         const absoluteURL = this.config.apiServerURL + "/" + url;
         let opts: request.Options = {
@@ -93,14 +107,22 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
             qs: {watch: "true"},
         };
 
-        if (labelSelector) {
-            opts.qs.labelSelector = labelSelectorToQueryString(labelSelector);
+        if (watchOpts.labelSelector) {
+            opts.qs.labelSelector = labelSelectorToQueryString(watchOpts.labelSelector);
+        }
+
+        if (watchOpts.resourceVersion) {
+            opts.qs.resourceVersion = watchOpts.resourceVersion;
         }
 
         opts = this.config.mapRequestOptions(opts);
 
-        return new Promise<void>((res, rej) => {
-            const req = request(opts, (err, response, body) => {
+        let lastVersion: number = watchOpts.resourceVersion || 0;
+
+        this.opts.debugFn(`executing WATCH request on ${absoluteURL} (starting revision ${lastVersion})`);
+
+        return new Promise<WatchResult>((res, rej) => {
+            const req = request(opts, (err, response, bodyString) => {
                 if (err) {
                     rej(err);
                     return;
@@ -111,9 +133,35 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
                     return;
                 }
 
+                if (bodyString.length === 0) {
+                    this.opts.debugFn(`WATCH request on ${url} returned empty response`);
+                    res({resourceVersion: lastVersion});
+                }
+
+                let body: any;
+
                 try {
-                    body = JSON.parse(body);
+                    body = JSON.parse(bodyString);
                 } catch (err) {
+                    if (bodyString.length > 0) {
+                        const bodyLines = bodyString.split("\n");
+                        for (const line of bodyLines) {
+                            const parsedLine: WatchEvent<R> = JSON.parse(line);
+                            if (parsedLine.type === "ADDED" || parsedLine.type === "MODIFIED" || parsedLine.type === "DELETED") {
+                                const resourceVersion = parseInt(parsedLine.object.metadata.resourceVersion || "0", 10);
+                                if (resourceVersion > lastVersion) {
+                                    this.opts.debugFn(`watch: emitting missed ${parsedLine.type} event for ${parsedLine.object.metadata.name}`);
+
+                                    lastVersion = resourceVersion;
+                                    onUpdate(parsedLine);
+                                }
+                            }
+                        }
+
+                        res({resourceVersion: lastVersion});
+                        return;
+                    }
+
                     rej(err);
                     return;
                 }
@@ -123,7 +171,7 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
                     return;
                 }
 
-                res();
+                res({resourceVersion: lastVersion});
             });
 
             let buffer = "";
@@ -138,7 +186,14 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
                 try {
                     const obj: WatchEvent<R> = JSON.parse(buffer);
                     buffer = "";
-                    onUpdate(obj);
+
+                    const resourceVersion = obj.object.metadata.resourceVersion ? parseInt(obj.object.metadata.resourceVersion, 10) : -1;
+                    if (resourceVersion > lastVersion) {
+                        this.opts.debugFn(`watch: emitting ${obj.type} event for ${obj.object.metadata.name}`);
+
+                        lastVersion = resourceVersion;
+                        onUpdate(obj);
+                    }
                 } catch (err) {
                     onError(err);
                 }

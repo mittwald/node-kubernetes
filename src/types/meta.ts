@@ -5,7 +5,12 @@ export interface Resource<K = string, V = "v1"> {
     apiVersion: V;
 }
 
-export type ResourceList<R, K = string, V = "v1"> = Resource<K, V> & { items: null | R[] };
+export interface ResourceListMeta {
+    continue: string;
+    resourceVersion: string;
+}
+
+export type ResourceList<R, K = string, V = "v1"> = Resource<K, V> & { metadata: ResourceListMeta; items: null | R[] };
 
 export interface MetadataObject<M = metav1.ObjectMeta> { metadata: M; }
 export type APIObject<K = string, V = "v1"> = Resource<K, V> & MetadataObject;

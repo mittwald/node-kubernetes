@@ -1,7 +1,8 @@
-import {IKubernetesRESTClient} from "./client";
+import {IKubernetesRESTClient, WatchResult} from "./client";
 import {LabelSelector} from "./label";
 import Bottleneck from "bottleneck";
 import {WatchEvent} from "./types/meta/v1";
+import {MetadataObject} from "./types/meta";
 
 export class RatelimitedKubernetesRESTClient implements IKubernetesRESTClient {
     private limiter: Bottleneck;
@@ -30,7 +31,7 @@ export class RatelimitedKubernetesRESTClient implements IKubernetesRESTClient {
         return this.limiter.schedule(() => this.inner.get(url, labelSelector));
     }
 
-    public watch<R>(url: string, onUpdate: (o: WatchEvent<R>) => any, onError: (err: any) => any, labelSelector?: LabelSelector): Promise<void> {
+    public watch<R extends MetadataObject>(url: string, onUpdate: (o: WatchEvent<R>) => any, onError: (err: any) => any, labelSelector?: LabelSelector): Promise<WatchResult> {
         return this.limiter.schedule(() => this.inner.watch(url, onUpdate, onError, labelSelector));
     }
 }

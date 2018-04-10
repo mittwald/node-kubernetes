@@ -4,8 +4,6 @@ import {LabelSelector, labelSelectorToQueryString} from "./label";
 import {isStatus, MetadataObject} from "./types/meta";
 import {WatchEvent} from "./types/meta/v1";
 
-const debug = require("debug")("k8s:client");
-
 export type RequestMethod = "GET"|"POST"|"PUT"|"PATCH"|"DELETE";
 
 export interface IKubernetesRESTClientOptions {

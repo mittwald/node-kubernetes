@@ -3,4 +3,5 @@ export interface ObjectMeta {
     namespace?: string;
     labels?: { [key: string]: string };
     annotations?: { [key: string]: string };
+    resourceVersion?: string;
 }

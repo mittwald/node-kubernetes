@@ -1,7 +1,8 @@
-import {IKubernetesRESTClient} from "./client";
-import {APIObject, MetadataObject} from "./types/meta";
+import {IKubernetesRESTClient, WatchOptions, WatchResult} from "./client";
+import {APIObject, MetadataObject, ResourceList} from "./types/meta";
 import {DeleteOptions, WatchEvent} from "./types/meta/v1";
 import {LabelSelector} from "./label";
+import {WatchHandle} from "./watch";
 
 export interface IResourceClient<R extends MetadataObject, K, V, O extends R = R> {
     list(labelSelector?: LabelSelector): Promise<Array<APIObject<K, V> & O>>;
@@ -11,7 +12,8 @@ export interface IResourceClient<R extends MetadataObject, K, V, O extends R = R
     post(resource: R): Promise<APIObject<K, V> & O>;
     delete(resourceOrName: R|string, deleteOptions?: DeleteOptions): Promise<void>;
     deleteMany(labelSelector: LabelSelector): Promise<void>;
-    watch(labelSelector: LabelSelector, handler: (event: WatchEvent<O>) => any, errorHandler?: (error: any) => any): Promise<void>;
+    watch(handler: (event: WatchEvent<O>) => any, errorHandler?: (error: any) => any, opts?: WatchOptions): Promise<WatchResult>;
+    listWatch(handler: (event: WatchEvent<O>) => any, errorHandler?: (error: any) => any, opts?: WatchOptions): WatchHandle;
 }
 
 export interface INamespacedResourceClient<R extends MetadataObject, K, V, O extends R = R> extends IResourceClient<R, K, V, O> {
@@ -52,8 +54,12 @@ export class CustomResourceClient<R extends MetadataObject, K, V, O extends R = 
         return this.inner.deleteMany(labelSelector);
     }
 
-    public watch(labelSelector: LabelSelector, handler: (event: WatchEvent<O>) => any, errorHandler?: (error: any) => any): Promise<void> {
-        return this.inner.watch(labelSelector, handler, errorHandler);
+    public watch(handler: (event: WatchEvent<O>) => any, errorHandler?: (error: any) => any, opts?: WatchOptions): Promise<WatchResult> {
+        return this.inner.watch(handler, errorHandler, opts);
+    }
+
+    public listWatch(handler: (event: WatchEvent<O>) => any, errorHandler?: (error: any) => any, opts?: WatchOptions): WatchHandle {
+        return this.inner.listWatch(handler, errorHandler, opts);
     }
 
     public namespace(ns: string): INamespacedResourceClient<R, K, V, O> {
@@ -92,9 +98,39 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
         return await this.client.get(this.baseURL + "/" + name);
     }
 
-    public watch(labelSelector: LabelSelector, handler: (event: WatchEvent<O>) => any, errorHandler?: (error: any) => any): Promise<void> {
+    public watch(handler: (event: WatchEvent<O>) => any, errorHandler?: (error: any) => any, opts: WatchOptions = {}): Promise<WatchResult> {
         errorHandler = errorHandler || (() => {});
-        return this.client.watch(this.baseURL, handler, errorHandler, labelSelector);
+        return this.client.watch(this.baseURL, handler, errorHandler, opts);
+    }
+
+    public listWatch(handler: (event: WatchEvent<O>) => any, errorHandler?: (error: any) => any, opts: WatchOptions = {}): WatchHandle {
+        let resourceVersion = 0;
+        let running = true;
+
+        const initialized = this.client.get(this.baseURL, opts.labelSelector)
+            .then((list: ResourceList<O>) => {
+                resourceVersion = parseInt(list.metadata.resourceVersion, 10);
+
+                for (const i of list.items || []) {
+                    const event: WatchEvent<O> = {type: "ADDED", object: i};
+                    handler(event);
+                }
+            });
+
+        initialized.then(async () => {
+            errorHandler = errorHandler || (() => {});
+            while (running) {
+                const result = await this.client.watch(this.baseURL, handler, errorHandler, {...opts, resourceVersion});
+                resourceVersion = Math.max(resourceVersion, result.resourceVersion);
+            }
+        });
+
+        return {
+            initialized,
+            stop() {
+                running = false;
+            },
+        };
     }
 
     public async apply(resource: R): Promise<APIObject<K, V> & O> {

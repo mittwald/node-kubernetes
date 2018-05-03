@@ -46,6 +46,7 @@ export interface FlexVolumeSource {
 export type PersistentVolumeSource =
     {awsElasticBlockStore: AWSElasticBlockStoreVolumeSource} |
     {hostPath: HostPathVolumeSource} |
+    {emptyDir: {}} |
     {nfs: NFSVolumeSource} |
     {quobyte: QuobyteVolumeSource} |
     {flexVolume: FlexVolumeSource};

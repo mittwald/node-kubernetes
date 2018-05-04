@@ -154,7 +154,7 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
                 try {
                     const result = await this.client.watch(this.baseURL, handler, errorHandler, {...opts, resourceVersion});
                     resourceVersion = Math.max(resourceVersion, result.resourceVersion);
-                    errorCount --;
+                    errorCount = 0;
                 } catch (err) {
                     errorCount ++;
 

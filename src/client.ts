@@ -146,15 +146,20 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
                     if (bodyString.length > 0) {
                         const bodyLines = bodyString.split("\n");
                         for (const line of bodyLines) {
-                            const parsedLine: WatchEvent<R> = JSON.parse(line);
-                            if (parsedLine.type === "ADDED" || parsedLine.type === "MODIFIED" || parsedLine.type === "DELETED") {
-                                const resourceVersion = parseInt(parsedLine.object.metadata.resourceVersion || "0", 10);
-                                if (resourceVersion > lastVersion) {
-                                    this.opts.debugFn(`watch: emitting missed ${parsedLine.type} event for ${parsedLine.object.metadata.name}`);
+                            try {
+                                const parsedLine: WatchEvent<R> = JSON.parse(line);
+                                if (parsedLine.type === "ADDED" || parsedLine.type === "MODIFIED" || parsedLine.type === "DELETED") {
+                                    const resourceVersion = parseInt(parsedLine.object.metadata.resourceVersion || "0", 10);
+                                    if (resourceVersion > lastVersion) {
+                                        this.opts.debugFn(`watch: emitting missed ${parsedLine.type} event for ${parsedLine.object.metadata.name}`);
 
-                                    lastVersion = resourceVersion;
-                                    onUpdate(parsedLine);
+                                        lastVersion = resourceVersion;
+                                        onUpdate(parsedLine);
+                                    }
                                 }
+                            } catch (err) {
+                                this.opts.debugFn(`watch: could not parse JSON line '${line}'`);
+                                rej(err);
                             }
                         }
 

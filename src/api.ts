@@ -5,6 +5,7 @@ import * as resourceAppsV1beta1 from "./apis/apps/v1beta1";
 import * as resourceExtensionsV1beta1 from "./apis/extensions/v1beta1";
 import {AppsAPI, BatchAPI, CoreAPI, ExtensionsAPI, RBACAPI} from "./apis";
 import {MetadataObject} from "./types/meta";
+import {Registry} from "prom-client";
 
 export interface IKubernetesAPI {
     extend<C>(name: string, customResourceAPI: C): this & C;
@@ -17,15 +18,15 @@ export interface IKubernetesAPI {
 
 export class KubernetesAPI implements IKubernetesAPI {
 
-    public constructor(private restClient: IKubernetesRESTClient) {
+    public constructor(private restClient: IKubernetesRESTClient, private registry: Registry) {
     }
 
     private nc<R extends MetadataObject, K, V, O extends R = R>(apiBaseURL: string, resourceBaseURL: string): INamespacedResourceClient<R, K, V, O> {
-        return new NamespacedResourceClient(this.restClient, apiBaseURL, resourceBaseURL);
+        return new NamespacedResourceClient(this.restClient, apiBaseURL, resourceBaseURL, this.registry);
     }
 
     private c<R extends MetadataObject, K, V, O extends R = R>(apiBaseURL: string, resourceBaseURL: string): IResourceClient<R, K, V, O> {
-        return new ResourceClient(this.restClient, apiBaseURL, resourceBaseURL);
+        return new ResourceClient(this.restClient, apiBaseURL, resourceBaseURL, this.registry);
     }
 
     public extend<C>(name: string, customResourceAPI: C): this & C {
@@ -45,7 +46,7 @@ export class KubernetesAPI implements IKubernetesAPI {
                 persistentVolumes: () => this.c("/api/v1", "/persistentvolumes"),
                 persistentVolumeClaims: () => this.nc("/api/v1", "/persistentvolumeclaims"),
                 services: (): INamespacedResourceClient<corev1.Service, "Service", "v1"> => {
-                    const client = new NamespacedResourceClient<corev1.Service, "Service", "v1">(this.restClient, "/api/v1", "/services");
+                    const client = new NamespacedResourceClient<corev1.Service, "Service", "v1">(this.restClient, "/api/v1", "/services", this.registry);
                     client.supportsCollectionDeletion = false;
                     return client;
                 },
@@ -64,8 +65,8 @@ export class KubernetesAPI implements IKubernetesAPI {
                 statefulSets: () => this.nc("/apis/apps/v1", "/statefulsets"),
             }),
             v1beta1: () => ({
-                deployments: () => new resourceAppsV1beta1.DeploymentResourceClient(this.restClient),
-                statefulSets: () => new resourceAppsV1beta1.StatefulSetResourceClient(this.restClient),
+                deployments: () => new resourceAppsV1beta1.DeploymentResourceClient(this.restClient, this.registry),
+                statefulSets: () => new resourceAppsV1beta1.StatefulSetResourceClient(this.restClient, this.registry),
             }),
         };
     }
@@ -85,7 +86,7 @@ export class KubernetesAPI implements IKubernetesAPI {
         return {
             v1beta1: () => ({
                 daemonSets: () => this.nc("/apis/extensions/v1beta1", "/daemonsets"),
-                deployments: () => new resourceExtensionsV1beta1.DeploymentResourceClient(this.restClient),
+                deployments: () => new resourceExtensionsV1beta1.DeploymentResourceClient(this.restClient, this.registry),
                 ingresses: () => this.nc("/apis/extensions/v1beta1", "/ingresses"),
                 networkPolicies: () => this.nc("/apis/extensions/v1beta1", "/networkpolicies"),
                 replicaSets: () => this.nc("/apis/extensions/v1beta1", "/replicasets"),
@@ -96,14 +97,14 @@ export class KubernetesAPI implements IKubernetesAPI {
     public rbac(): RBACAPI {
         return {
             v1: () => ({
-                clusterRoles: () => new ResourceClient(this.restClient, "/apis/rbac.authorization.k8s.io/v1", "/clusterroles"),
-                clusterRoleBindings: () => new ResourceClient(this.restClient, "/apis/rbac.authorization.k8s.io/v1", "/clusterrolebindings"),
-                roles: () => new NamespacedResourceClient(this.restClient, "/apis/rbac.authorization.k8s.io/v1", "/roles"),
-                roleBindings: () => new NamespacedResourceClient(this.restClient, "/apis/rbac.authorization.k8s.io/v1", "/rolebindings"),
+                clusterRoles: () => new ResourceClient(this.restClient, "/apis/rbac.authorization.k8s.io/v1", "/clusterroles", this.registry),
+                clusterRoleBindings: () => new ResourceClient(this.restClient, "/apis/rbac.authorization.k8s.io/v1", "/clusterrolebindings", this.registry),
+                roles: () => new NamespacedResourceClient(this.restClient, "/apis/rbac.authorization.k8s.io/v1", "/roles", this.registry),
+                roleBindings: () => new NamespacedResourceClient(this.restClient, "/apis/rbac.authorization.k8s.io/v1", "/rolebindings", this.registry),
             }),
             v1beta1: () => ({
-                roles: () => new NamespacedResourceClient(this.restClient, "/apis/rbac.authorization.k8s.io/v1beta1", "/roles"),
-                roleBindings: () => new NamespacedResourceClient(this.restClient, "/apis/rbac.authorization.k8s.io/v1beta1", "/rolebindings"),
+                roles: () => new NamespacedResourceClient(this.restClient, "/apis/rbac.authorization.k8s.io/v1beta1", "/roles", this.registry),
+                roleBindings: () => new NamespacedResourceClient(this.restClient, "/apis/rbac.authorization.k8s.io/v1beta1", "/rolebindings", this.registry),
             }),
         };
     }

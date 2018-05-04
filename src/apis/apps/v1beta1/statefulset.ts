@@ -3,11 +3,12 @@ import {IKubernetesRESTClient} from "../../../client";
 import {LabelSelector} from "../../../label";
 import {StatefulSet} from "../../../types/apps/v1beta1";
 import {DeleteOptions} from "../../../types/meta/v1";
+import {Registry} from "prom-client";
 
 export class StatefulSetResourceClient extends NamespacedResourceClient<StatefulSet, "StatefulSet", "apps/v1beta1"> {
 
-    public constructor(protected client: IKubernetesRESTClient) {
-        super(client, "/apis/apps/v1beta1", "/statefulsets");
+    public constructor(protected client: IKubernetesRESTClient, registry: Registry) {
+        super(client, "/apis/apps/v1beta1", "/statefulsets", registry);
     }
 
     public namespace(ns: string): StatefulSetResourceClient {

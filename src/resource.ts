@@ -3,6 +3,7 @@ import {APIObject, MetadataObject, ResourceList} from "./types/meta";
 import {DeleteOptions, WatchEvent} from "./types/meta/v1";
 import {LabelSelector} from "./label";
 import {WatchHandle} from "./watch";
+import {Counter, Gauge, Registry} from "prom-client";
 
 export interface IResourceClient<R extends MetadataObject, K, V, O extends R = R> {
     list(labelSelector?: LabelSelector): Promise<Array<APIObject<K, V> & O>>;
@@ -72,17 +73,41 @@ export class CustomResourceClient<R extends MetadataObject, K, V, O extends R = 
 }
 
 export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> implements IResourceClient<R, K, V, O> {
+    private static watchResyncErrorCount: Counter;
+    private static watchOpenCount: Gauge;
 
     protected baseURL: string;
+
     public supportsCollectionDeletion: boolean = true;
 
     public constructor(protected client: IKubernetesRESTClient,
                        protected apiBaseURL: string,
-                       protected resourceBaseURL: string) {
+                       protected resourceBaseURL: string,
+                       registry: Registry) {
         apiBaseURL = apiBaseURL.replace(/\/$/, "");
         resourceBaseURL = resourceBaseURL.replace(/^\//, "").replace(/\/$/, "");
 
         this.baseURL = apiBaseURL + "/" + resourceBaseURL;
+
+        // Metrics need to be static, because there can be multiple ResourceClients, but
+        // metrics may exist only _once_.
+        if (!ResourceClient.watchResyncErrorCount) {
+            ResourceClient.watchResyncErrorCount = new Counter({
+                name: "kubernetes_listwatch_resync_errors",
+                help: "Amount of resync errors while running listwatches",
+                registers: [registry],
+                labelNames: ["baseURL"],
+            });
+        }
+
+        if (!ResourceClient.watchOpenCount) {
+            ResourceClient.watchOpenCount = new Gauge({
+                name: "kubernetes_listwatch_open",
+                help: "Amount of currently open listwatches",
+                registers: [registry],
+                labelNames: ["baseURL"],
+            });
+        }
     }
 
     protected urlForResource(r: R): string {
@@ -107,7 +132,9 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
         let resourceVersion = 0;
         let running = true;
 
-        const initialized = this.client.get(this.baseURL, opts.labelSelector)
+        ResourceClient.watchOpenCount.inc({baseURL: this.baseURL});
+
+        const resync = () => this.client.get(this.baseURL, opts.labelSelector)
             .then((list: ResourceList<O>) => {
                 resourceVersion = parseInt(list.metadata.resourceVersion, 10);
 
@@ -117,12 +144,32 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
                 }
             });
 
+        const initialized = resync();
+
         initialized.then(async () => {
             errorHandler = errorHandler || (() => {});
+            let errorCount = 0;
+
             while (running) {
-                const result = await this.client.watch(this.baseURL, handler, errorHandler, {...opts, resourceVersion});
-                resourceVersion = Math.max(resourceVersion, result.resourceVersion);
+                try {
+                    const result = await this.client.watch(this.baseURL, handler, errorHandler, {...opts, resourceVersion});
+                    resourceVersion = Math.max(resourceVersion, result.resourceVersion);
+                    errorCount --;
+                } catch (err) {
+                    errorCount ++;
+
+                    ResourceClient.watchResyncErrorCount.inc({baseURL: this.baseURL});
+
+                    if (errorCount > 10) {
+                        ResourceClient.watchOpenCount.dec({baseURL: this.baseURL});
+                        throw new Error("more than 10 consecutive errors when watching " + this.baseURL);
+                    }
+
+                    await resync();
+                }
             }
+
+            ResourceClient.watchOpenCount.dec({baseURL: this.baseURL});
         });
 
         return {
@@ -179,11 +226,12 @@ export class NamespacedResourceClient<R extends MetadataObject, K, V, O extends 
     public constructor(client: IKubernetesRESTClient,
                        apiBaseURL: string,
                        resourceBaseURL: string,
+                       private registry: Registry,
                        ns?: string) {
+        super(client, apiBaseURL, resourceBaseURL, registry);
+
         apiBaseURL = apiBaseURL.replace(/\/$/, "");
         resourceBaseURL = resourceBaseURL.replace(/^\//, "").replace(/\/$/, "");
-
-        super(client, apiBaseURL, resourceBaseURL);
 
         this.ns = ns;
 
@@ -204,13 +252,13 @@ export class NamespacedResourceClient<R extends MetadataObject, K, V, O extends 
     }
 
     public namespace(ns: string): INamespacedResourceClient<R, K, V, O> {
-        const n = new NamespacedResourceClient<R, K, V, O>(this.client, this.apiBaseURL, this.resourceBaseURL, ns);
+        const n = new NamespacedResourceClient<R, K, V, O>(this.client, this.apiBaseURL, this.resourceBaseURL, this.registry, ns);
         n.supportsCollectionDeletion = this.supportsCollectionDeletion;
         return n;
     }
 
     public allNamespaces(): INamespacedResourceClient<R, K, V, O> {
-        const n = new NamespacedResourceClient<R, K, V, O>(this.client, this.apiBaseURL, this.resourceBaseURL);
+        const n = new NamespacedResourceClient<R, K, V, O>(this.client, this.apiBaseURL, this.resourceBaseURL, this.registry);
         n.supportsCollectionDeletion = this.supportsCollectionDeletion;
         return n;
     }

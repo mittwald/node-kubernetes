@@ -1,10 +1,11 @@
 import {FileBasedConfig} from "./config";
 import {KubernetesRESTClient} from "./client";
 import {KubernetesAPI} from "./api";
+import {register} from "prom-client";
 
 const config = new FileBasedConfig("/home/mhelmich/.kube/config");
 const client = new KubernetesRESTClient(config);
-const api = new KubernetesAPI(client);
+const api = new KubernetesAPI(client, register);
 
 (async () => {
     // const pods = await api.pods().namespace("kube-system").list();

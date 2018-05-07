@@ -247,6 +247,9 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
                         res(undefined);
                         return;
                     }
+
+                    this.opts.debugFn(`executing GET request on ${opts.url} failed. response body: ${JSON.stringify(body)}`);
+
                     rej(new Error(body.message));
                     return;
                 }

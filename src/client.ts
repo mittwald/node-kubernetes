@@ -33,7 +33,7 @@ export interface IKubernetesRESTClient {
     watch<R extends MetadataObject = MetadataObject>(url: string, onUpdate: (o: WatchEvent<R>) => any, onError: (err: any) => any, opts?: WatchOptions): Promise<WatchResult>;
 }
 
-const joinURL = (left: string, right: string) => (left + "/" + right).replace(/^\/\//, "");
+const joinURL = (left: string, right: string) => (left + "/" + right).replace(/^\/\//, "/");
 
 export class KubernetesRESTClient implements IKubernetesRESTClient {
 

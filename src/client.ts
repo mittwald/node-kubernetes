@@ -101,8 +101,8 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
                                                             onUpdate: (o: WatchEvent<R>) => any,
                                                             onError: (err: any) => any,
                                                             watchOpts: WatchOptions = {}): Promise<WatchResult> {
-        url = url.replace(/^\//, "");
-        const absoluteURL = this.config.apiServerURL + "/" + url;
+        const absoluteURL = joinURL(this.config.apiServerURL, url);
+
         let opts: request.Options = {
             url: absoluteURL,
             qs: {watch: "true"},

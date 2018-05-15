@@ -33,6 +33,8 @@ export interface IKubernetesRESTClient {
     watch<R extends MetadataObject = MetadataObject>(url: string, onUpdate: (o: WatchEvent<R>) => any, onError: (err: any) => any, opts?: WatchOptions): Promise<WatchResult>;
 }
 
+const joinURL = (left: string, right: string) => (left + "/" + right).replace(/([^:])(\/\/)/g, "$1/");
+
 export class KubernetesRESTClient implements IKubernetesRESTClient {
 
     private opts: IKubernetesRESTClientOptions;
@@ -42,8 +44,7 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
     }
 
     private request<R = any>(url: string, body?: any, method: RequestMethod = "POST", additionalOptions: request.CoreOptions = {}): Promise<R> {
-        url = url.replace(/^\//, "");
-        const absoluteURL = this.config.apiServerURL + "/" + url;
+        const absoluteURL = joinURL(this.config.apiServerURL, url);
 
         return new Promise((res, rej) => {
             let opts: request.OptionsWithUrl = {
@@ -100,8 +101,8 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
                                                             onUpdate: (o: WatchEvent<R>) => any,
                                                             onError: (err: any) => any,
                                                             watchOpts: WatchOptions = {}): Promise<WatchResult> {
-        url = url.replace(/^\//, "");
-        const absoluteURL = this.config.apiServerURL + "/" + url;
+        const absoluteURL = joinURL(this.config.apiServerURL, url);
+
         let opts: request.Options = {
             url: absoluteURL,
             qs: {watch: "true"},
@@ -207,8 +208,7 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
     }
 
     public get<R = any>(url: string, labelSelector?: LabelSelector): Promise<R|undefined> {
-        url = url.replace(/^\//, "");
-        const absoluteURL = this.config.apiServerURL + "/" + url;
+        const absoluteURL = joinURL(this.config.apiServerURL, url);
 
         return new Promise<R|undefined>((res, rej) => {
             let opts: request.OptionsWithUrl = {
@@ -243,6 +243,13 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
                 }
 
                 if (isStatus(body) && body.status === "Failure") {
+                    if(body.code === 404) {
+                        res(undefined);
+                        return;
+                    }
+
+                    this.opts.debugFn(`executing GET request on ${opts.url} failed. response body: ${JSON.stringify(body)}`);
+
                     rej(new Error(body.message));
                     return;
                 }

@@ -5,6 +5,8 @@ import {LabelSelector} from "./label";
 import {WatchHandle} from "./watch";
 import {Counter, Gauge, Registry} from "prom-client";
 
+const debug = require("debug")("kubernetes:resource");
+
 export interface IResourceClient<R extends MetadataObject, K, V, O extends R = R> {
     list(labelSelector?: LabelSelector): Promise<Array<APIObject<K, V> & O>>;
     get(name: string): Promise<(APIObject<K, V> & O) | undefined>;
@@ -84,8 +86,8 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
                        protected apiBaseURL: string,
                        protected resourceBaseURL: string,
                        registry: Registry) {
-        apiBaseURL = apiBaseURL.replace(/\/$/, "");
-        resourceBaseURL = resourceBaseURL.replace(/^\//, "").replace(/\/$/, "");
+        this.apiBaseURL = apiBaseURL.replace(/\/$/, "");
+        this.resourceBaseURL = resourceBaseURL.replace(/^\//, "").replace(/\/$/, "");
 
         this.baseURL = apiBaseURL + "/" + resourceBaseURL;
 
@@ -133,6 +135,7 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
         let running = true;
 
         ResourceClient.watchOpenCount.inc({baseURL: this.baseURL});
+        debug("starting list-watch on %o", this.resourceBaseURL);
 
         const resync = () => this.client.get(this.baseURL, opts.labelSelector)
             .then((list: ResourceList<O>) => {
@@ -150,6 +153,8 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
             errorHandler = errorHandler || (() => {});
             let errorCount = 0;
 
+            debug("initial list for list-watch on %o completed", this.resourceBaseURL);
+
             while (running) {
                 try {
                     const result = await this.client.watch(this.baseURL, handler, errorHandler, {...opts, resourceVersion});
@@ -165,6 +170,7 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
                         throw new Error("more than 10 consecutive errors when watching " + this.baseURL);
                     }
 
+                    debug("resuming watch with resync after error: %o", err);
                     await resync();
                 }
             }

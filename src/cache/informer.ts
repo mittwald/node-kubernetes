@@ -12,17 +12,17 @@ export interface Controller {
 }
 
 export class Informer<R extends MetadataObject, O extends R = R> {
-    public readonly store: Store<R>;
+    public readonly store: Store<O>;
 
     public constructor(private resource: IResourceClient<R, any, any, O>,
                        private labelSelector?: LabelSelector,
-                       store?: Store<R>,
+                       store?: Store<O>,
                        ) {
         this.store = store || new InMemoryStore();
     }
 
     public start(): Controller {
-        const handler = (event: WatchEvent<R>) => {
+        const handler = (event: WatchEvent<O>) => {
             const {type, object} = event;
 
             switch (type) {

@@ -11,10 +11,10 @@ export interface Controller {
     stop(): void;
 }
 
-export class Informer<R extends MetadataObject> {
+export class Informer<R extends MetadataObject, O extends R = R> {
     public readonly store: Store<R>;
 
-    public constructor(private resource: IResourceClient<R, any, any>,
+    public constructor(private resource: IResourceClient<R, any, any, O>,
                        private labelSelector?: LabelSelector,
                        store?: Store<R>,
                        ) {

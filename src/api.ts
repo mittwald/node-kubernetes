@@ -3,7 +3,7 @@ import {INamespacedResourceClient, IResourceClient, NamespacedResourceClient, Re
 import * as corev1 from "./types/core/v1";
 import * as resourceAppsV1beta1 from "./apis/apps/v1beta1";
 import * as resourceExtensionsV1beta1 from "./apis/extensions/v1beta1";
-import {AppsAPI, BatchAPI, CoreAPI, ExtensionsAPI, PolicyAPI, RBACAPI} from "./apis";
+import {AppsAPI, AutoscalingAPI, BatchAPI, CoreAPI, ExtensionsAPI, PolicyAPI, RBACAPI} from "./apis";
 import {MetadataObject} from "./types/meta";
 import {Registry} from "prom-client";
 
@@ -15,6 +15,7 @@ export interface IKubernetesAPI {
     extensions(): ExtensionsAPI;
     rbac(): RBACAPI;
     policy(): PolicyAPI;
+    autoscaling(): AutoscalingAPI;
 }
 
 export class KubernetesAPI implements IKubernetesAPI {
@@ -114,6 +115,14 @@ export class KubernetesAPI implements IKubernetesAPI {
         return {
             v1beta1: () => ({
                 podDisruptionBudgets: () => new NamespacedResourceClient(this.restClient, "/apis/policy/v1beta1", "/poddisruptionbudgets", this.registry),
+            }),
+        };
+    }
+
+    public autoscaling(): AutoscalingAPI {
+        return {
+            v1: () => ({
+                horizontalPodAutoscalers: () => this.nc("/apis/autoscaling/v1", "/horizontalpodautoscalers"),
             }),
         };
     }

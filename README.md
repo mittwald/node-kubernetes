@@ -134,6 +134,8 @@ new issue or pull request to add support for additional API objects.
     - clusterRoleBindings
     - roles
     - roleBindings
+- autoscaling/v1
+    - horizontalPodAutoscalers
 
 ## References
 

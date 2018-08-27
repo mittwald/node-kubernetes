@@ -136,6 +136,8 @@ new issue or pull request to add support for additional API objects.
     - roleBindings
 - autoscaling/v1
     - horizontalPodAutoscalers
+- apiextensions.k8s.io/v1beta1
+    - customResourceDefinitions
 
 ## References
 

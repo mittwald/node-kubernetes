@@ -1,3 +1,4 @@
+export * from "./apiextensions";
 export * from "./apps";
 export * from "./autoscaling";
 export * from "./batch";

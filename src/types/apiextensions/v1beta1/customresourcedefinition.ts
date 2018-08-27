@@ -6,16 +6,17 @@ export interface CustomResourceDefinition {
     spec: CustomResourceDefinitionSpec;
 }
 
-export interface CustomResourceDefinitionSpec {
+export type CustomResourceDefinitionSpec = {
     additionalPrinterColumns?: CustomResourceColumnDefinition[];
     group: string;
     names: CustomResourceDefinitionNames;
-    scope?: "Namespaced"|"Cluster";
+    scope?: "Namespaced" | "Cluster";
     subresources?: CustomResourceSubresources;
     validation?: CustomResourceValidation;
-    version: string;
-    versions: CustomResourceDefinitionVersion[];
-}
+} & (
+    {version: string} |
+    {versions: CustomResourceDefinitionVersion[]}
+);
 
 export interface CustomResourceColumnDefinition {
     JSONPath: string;

@@ -19,6 +19,7 @@ const defaultRESTClientOptions: IKubernetesRESTClientOptions = {
 export interface WatchOptions {
     labelSelector?: LabelSelector;
     resourceVersion?: number;
+    abortAfterErrorCount?: number;
 }
 
 export interface WatchResult {

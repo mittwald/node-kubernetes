@@ -7,6 +7,8 @@ import {Counter, Gauge, Registry} from "prom-client";
 
 const debug = require("debug")("kubernetes:resource");
 
+const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
+
 export interface IResourceClient<R extends MetadataObject, K, V, O extends R = R> {
     list(labelSelector?: LabelSelector): Promise<Array<APIObject<K, V> & O>>;
     get(name: string): Promise<(APIObject<K, V> & O) | undefined>;
@@ -149,7 +151,7 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
 
         const initialized = resync();
 
-        initialized.then(async () => {
+        const done = initialized.then(async () => {
             errorHandler = errorHandler || (() => {});
             let errorCount = 0;
 
@@ -165,10 +167,13 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
 
                     ResourceClient.watchResyncErrorCount.inc({baseURL: this.baseURL});
 
-                    if (errorCount > 10) {
+                    if (opts.abortAfterErrorCount && errorCount > opts.abortAfterErrorCount) {
                         ResourceClient.watchOpenCount.dec({baseURL: this.baseURL});
-                        throw new Error("more than 10 consecutive errors when watching " + this.baseURL);
+                        throw new Error(`more than ${opts.abortAfterErrorCount} consecutive errors when watching ${this.baseURL}`);
                     }
+
+                    debug("resuming watch after back-off of %o ms", 10000);
+                    await sleep(10000);
 
                     debug("resuming watch with resync after error: %o", err);
                     await resync();
@@ -180,6 +185,7 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
 
         return {
             initialized,
+            done,
             stop() {
                 running = false;
             },

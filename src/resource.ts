@@ -167,6 +167,10 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
 
                     ResourceClient.watchResyncErrorCount.inc({baseURL: this.baseURL});
 
+                    if (opts.onError) {
+                        opts.onError(err);
+                    }
+
                     if (opts.abortAfterErrorCount && errorCount > opts.abortAfterErrorCount) {
                         ResourceClient.watchOpenCount.dec({baseURL: this.baseURL});
                         throw new Error(`more than ${opts.abortAfterErrorCount} consecutive errors when watching ${this.baseURL}`);

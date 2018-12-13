@@ -20,6 +20,7 @@ export interface WatchOptions {
     labelSelector?: LabelSelector;
     resourceVersion?: number;
     abortAfterErrorCount?: number;
+    onError?: (err: any) => void;
 }
 
 export interface WatchResult {

@@ -245,7 +245,7 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
                 }
 
                 if (isStatus(body) && body.status === "Failure") {
-                    if(body.code === 404) {
+                    if (body.code === 404) {
                         res(undefined);
                         return;
                     }

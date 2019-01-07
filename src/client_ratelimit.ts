@@ -9,7 +9,10 @@ export class RatelimitedKubernetesRESTClient implements IKubernetesRESTClient {
 
     public constructor(private inner: IKubernetesRESTClient, limiter?: Bottleneck) {
         if (!limiter) {
-            limiter = new Bottleneck(2, 200);
+            limiter = new Bottleneck({
+                maxConcurrent: 2,
+                minTime: 200,
+            });
         }
 
         this.limiter = limiter;

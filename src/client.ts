@@ -4,7 +4,7 @@ import {LabelSelector, labelSelectorToQueryString} from "./label";
 import {isStatus, MetadataObject} from "./types/meta";
 import {WatchEvent} from "./types/meta/v1";
 
-const debug = require("debug")("kubernetes:client");
+const debug = require("debug")("k8s:client");
 
 export type RequestMethod = "GET"|"POST"|"PUT"|"PATCH"|"DELETE";
 
@@ -13,7 +13,7 @@ export interface IKubernetesRESTClientOptions {
 }
 
 const defaultRESTClientOptions: IKubernetesRESTClientOptions = {
-    debugFn: (msg: string) => debug(msg),
+    debugFn: () => { return; },
 };
 
 export interface WatchOptions {
@@ -139,7 +139,6 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
                 if (bodyString.length === 0) {
                     this.opts.debugFn(`WATCH request on ${url} returned empty response`);
                     res({resourceVersion: lastVersion});
-                    return;
                 }
 
                 let body: any;
@@ -147,31 +146,35 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
                 try {
                     body = JSON.parse(bodyString);
                 } catch (err) {
-                    const bodyLines = bodyString.split("\n");
-                    for (const line of bodyLines) {
-                        try {
-                            const parsedLine: WatchEvent<R> = JSON.parse(line);
-                            if (parsedLine.type === "ADDED" || parsedLine.type === "MODIFIED" || parsedLine.type === "DELETED") {
-                                const resourceVersion = parseInt(parsedLine.object.metadata.resourceVersion || "0", 10);
-                                if (resourceVersion > lastVersion) {
-                                    this.opts.debugFn(`watch: emitting missed ${parsedLine.type} event for ${parsedLine.object.metadata.name}`);
+                    if (bodyString.length > 0) {
+                        const bodyLines = bodyString.split("\n");
+                        for (const line of bodyLines) {
+                            try {
+                                const parsedLine: WatchEvent<R> = JSON.parse(line);
+                                if (parsedLine.type === "ADDED" || parsedLine.type === "MODIFIED" || parsedLine.type === "DELETED") {
+                                    const resourceVersion = parseInt(parsedLine.object.metadata.resourceVersion || "0", 10);
+                                    if (resourceVersion > lastVersion) {
+                                        this.opts.debugFn(`watch: emitting missed ${parsedLine.type} event for ${parsedLine.object.metadata.name}`);
 
-                                    lastVersion = resourceVersion;
-                                    onUpdate(parsedLine);
+                                        lastVersion = resourceVersion;
+                                        onUpdate(parsedLine);
+                                    }
                                 }
+                            } catch (err) {
+                                this.opts.debugFn(`watch: could not parse JSON line '${line}'`);
+                                rej(err);
                             }
-                        } catch (err) {
-                            this.opts.debugFn(`watch: could not parse JSON line '${line}'`);
-                            rej(err);
-                            return;
                         }
+
+                        res({resourceVersion: lastVersion});
+                        return;
                     }
-                    res({resourceVersion: lastVersion});
+
+                    rej(err);
                     return;
                 }
 
                 if (isStatus(body) && body.status === "Failure") {
-                    this.opts.debugFn(`watch: failed with status ${body}`)
                     rej(body.message);
                     return;
                 }

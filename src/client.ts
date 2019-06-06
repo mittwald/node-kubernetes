@@ -244,7 +244,7 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
                     return;
                 }
 
-                debug(`GET request on ${opts.url} succeeded with status ${response.statusCode}: ${body}`);
+                debug(`GET request on %o succeeded with status %o: %O`, opts.url, response.statusCode, body);
                 res(body);
             });
         });

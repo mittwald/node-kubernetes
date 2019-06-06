@@ -8,13 +8,6 @@ const debug = require("debug")("kubernetes:client");
 
 export type RequestMethod = "GET"|"POST"|"PUT"|"PATCH"|"DELETE";
 
-export interface IKubernetesRESTClientOptions {
-    debugFn: (msg: string) => any;
-}
-
-const defaultRESTClientOptions: IKubernetesRESTClientOptions = {
-    debugFn: (msg: string) => debug(msg),
-};
 
 export interface WatchOptions {
     labelSelector?: LabelSelector;
@@ -39,10 +32,8 @@ const joinURL = (left: string, right: string) => (left + "/" + right).replace(/(
 
 export class KubernetesRESTClient implements IKubernetesRESTClient {
 
-    private opts: IKubernetesRESTClientOptions;
 
-    public constructor(private config: IKubernetesClientConfig, opts: Partial<IKubernetesRESTClientOptions> = {}) {
-        this.opts = {...defaultRESTClientOptions, ...opts};
+    public constructor(private config: IKubernetesClientConfig) {
     }
 
     private request<R = any>(url: string, body?: any, method: RequestMethod = "POST", additionalOptions: request.CoreOptions = {}): Promise<R> {
@@ -62,7 +53,7 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
             opts = this.config.mapRequestOptions(opts);
             opts = {...opts, ...additionalOptions};
 
-            this.opts.debugFn(`executing ${method} request on ${opts.url}`);
+            debug(`executing ${method} request on ${opts.url}`);
 
             request(opts, (err, response, responseBody) => {
                 if (err) {
@@ -75,7 +66,7 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
                     return;
                 }
 
-                this.opts.debugFn(`${method} request on ${opts.url} succeeded with status ${response.statusCode}: ${responseBody}`);
+                debug(`${method} request on ${opts.url} succeeded with status ${response.statusCode}: ${responseBody}`);
                 res(responseBody);
             });
         });
@@ -122,7 +113,7 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
 
         let lastVersion: number = watchOpts.resourceVersion || 0;
 
-        this.opts.debugFn(`executing WATCH request on ${absoluteURL} (starting revision ${lastVersion})`);
+        debug(`executing WATCH request on ${absoluteURL} (starting revision ${lastVersion})`);
 
         return new Promise<WatchResult>((res, rej) => {
             const req = request(opts, (err, response, bodyString) => {
@@ -137,7 +128,7 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
                 }
 
                 if (bodyString.length === 0) {
-                    this.opts.debugFn(`WATCH request on ${url} returned empty response`);
+                    debug(`WATCH request on ${url} returned empty response`);
                     res({resourceVersion: lastVersion});
                     return;
                 }
@@ -154,14 +145,14 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
                             if (parsedLine.type === "ADDED" || parsedLine.type === "MODIFIED" || parsedLine.type === "DELETED") {
                                 const resourceVersion = parseInt(parsedLine.object.metadata.resourceVersion || "0", 10);
                                 if (resourceVersion > lastVersion) {
-                                    this.opts.debugFn(`watch: emitting missed ${parsedLine.type} event for ${parsedLine.object.metadata.name}`);
+                                    debug(`watch: emitting missed ${parsedLine.type} event for ${parsedLine.object.metadata.name}`);
 
                                     lastVersion = resourceVersion;
                                     onUpdate(parsedLine);
                                 }
                             }
                         } catch (err) {
-                            this.opts.debugFn(`watch: could not parse JSON line '${line}'`);
+                            debug(`watch: could not parse JSON line '${line}'`);
                             rej(err);
                             return;
                         }
@@ -171,7 +162,7 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
                 }
 
                 if (isStatus(body) && body.status === "Failure") {
-                    this.opts.debugFn(`watch: failed with status ${body}`)
+                    debug(`watch: failed with status ${body}`)
                     rej(body.message);
                     return;
                 }
@@ -194,7 +185,7 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
 
                     const resourceVersion = obj.object.metadata.resourceVersion ? parseInt(obj.object.metadata.resourceVersion, 10) : -1;
                     if (resourceVersion > lastVersion) {
-                        this.opts.debugFn(`watch: emitting ${obj.type} event for ${obj.object.metadata.name}`);
+                        debug(`watch: emitting ${obj.type} event for ${obj.object.metadata.name}`);
 
                         lastVersion = resourceVersion;
                         onUpdate(obj);
@@ -221,7 +212,7 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
 
             opts = this.config.mapRequestOptions(opts);
 
-            this.opts.debugFn(`executing GET request on ${opts.url}`);
+            debug(`executing GET request on ${opts.url}`);
 
             request(opts, (err, response, body) => {
                 if (err) {
@@ -247,13 +238,13 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
                         return;
                     }
 
-                    this.opts.debugFn(`executing GET request on ${opts.url} failed. response body: ${JSON.stringify(body)}`);
+                    debug(`executing GET request on ${opts.url} failed. response body: ${JSON.stringify(body)}`);
 
                     rej(new Error(body.message));
                     return;
                 }
 
-                this.opts.debugFn(`GET request on ${opts.url} succeeded with status ${response.statusCode}: ${body}`);
+                debug(`GET request on ${opts.url} succeeded with status ${response.statusCode}: ${body}`);
                 res(body);
             });
         });

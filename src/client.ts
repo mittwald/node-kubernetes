@@ -162,7 +162,7 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
                 }
 
                 if (isStatus(body) && body.status === "Failure") {
-                    debug(`watch: failed with status ${body}`)
+                    debug(`watch: failed with status %O`, body)
                     rej(body.message);
                     return;
                 }

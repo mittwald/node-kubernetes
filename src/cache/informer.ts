@@ -1,4 +1,4 @@
-import {InMemoryStore, Store} from "./store";
+import {InMemoryStore, ObservableStore, ObservableStoreDecorator, Store} from "./store";
 import {MetadataObject} from "../types/meta";
 import {IResourceClient} from "../resource";
 import {LabelSelector} from "../label";
@@ -12,14 +12,14 @@ export interface Controller {
 }
 
 export class Informer<R extends MetadataObject, O extends R = R> {
-    public readonly store: Store<O>;
+    public readonly store: ObservableStore<O>;
 
     public constructor(
         private resource: IResourceClient<R, any, any, O>,
         private labelSelector?: LabelSelector,
         store?: Store<O>,
     ) {
-        this.store = store || new InMemoryStore();
+        this.store = new ObservableStoreDecorator(store || new InMemoryStore());
     }
 
     public start(): Controller {

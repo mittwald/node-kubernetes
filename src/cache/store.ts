@@ -12,6 +12,42 @@ export interface Store<R extends MetadataObject> {
     pull(obj: R): void;
 }
 
+export interface ObservableStore<R extends MetadataObject> extends Store<R> {
+    onStoredOrUpdated(fn: (obj: R) => any): void;
+    onRemoved(fn: (obj: R) => any): void;
+}
+
+export class ObservableStoreDecorator<R extends MetadataObject> implements ObservableStore<R> {
+    private onStoreHandlers: Array<(obj: R) => any> = [];
+    private onRemoveHandlers: Array<(obj: R) => any> = [];
+
+    public constructor(private inner: Store<R>) {
+    }
+
+    public onStoredOrUpdated(fn: (obj: R) => any): void {
+        this.onStoreHandlers.push(fn);
+    }
+
+    public onRemoved(fn: (obj: R) => any): void {
+        this.onRemoveHandlers.push(fn);
+    }
+
+    public get(namespace: string, name: string): Promise<R | undefined> {
+        return this.inner.get(namespace, name);
+    }
+
+    public pull(obj: R): void {
+        this.inner.pull(obj);
+        this.onRemoveHandlers.forEach(fn => fn(obj));
+    }
+
+    public store(obj: R): void {
+        this.inner.store(obj);
+        this.onRemoveHandlers.forEach(fn => fn(obj));
+    }
+
+}
+
 export class InMemoryStore<R extends MetadataObject> implements Store<R> {
     private objects = new Map<string, R>();
 

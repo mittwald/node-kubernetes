@@ -31,6 +31,7 @@ describe("Kubernetes API client", () => {
         const podListData: PodList = {
             apiVersion: "v1",
             kind: "PodList",
+            metadata: {continue: "", resourceVersion: "0"},
             items: [
                 {
                     metadata: {name: "foo-pod"},
@@ -137,6 +138,7 @@ describe("Kubernetes API client", () => {
         const serviceListData: ServiceList = {
             apiVersion: "v1",
             kind: "ServiceList",
+            metadata: {continue: "", resourceVersion: "0"},
             items: [
                 {
                     metadata: {name: "foo-svc"},

@@ -43,7 +43,7 @@ export class ObservableStoreDecorator<R extends MetadataObject> implements Obser
 
     public store(obj: R): void {
         this.inner.store(obj);
-        this.onRemoveHandlers.forEach(fn => fn(obj));
+        this.onStoreHandlers.forEach(fn => fn(obj));
     }
 
 }

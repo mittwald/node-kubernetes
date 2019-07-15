@@ -153,6 +153,9 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
                             }
                         } catch (err) {
                             debug(`watch: could not parse JSON line '${line}'`);
+                            if (line === "") {
+                                continue;
+                            }
                             rej(err);
                             return;
                         }

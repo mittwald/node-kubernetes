@@ -20,9 +20,18 @@ export interface WatchResult {
     resourceVersion: number;
 }
 
+export const PatchKindStrategicMergePatch = "application/stategic-merge-patch+json";
+export const PatchKindMergePatch = "application/merge-patch+json";
+export const PatchKindJSONPatch = "application/json-patch+json";
+export type PatchKind =
+    | typeof PatchKindStrategicMergePatch
+    | typeof PatchKindMergePatch
+    | typeof PatchKindJSONPatch;
+
 export interface IKubernetesRESTClient {
     post<R = any>(url: string, body: any): Promise<R>;
     put<R = any>(url: string, body: any): Promise<R>;
+    patch<R = any>(url: string, body: any, patchKind: PatchKind): Promise<R>;
     delete<R = any>(url: string, labelSelector?: LabelSelector, queryParams?: {[k: string]: string}, body?: any): Promise<R>;
     get<R = any>(url: string, labelSelector?: LabelSelector): Promise<R|undefined>;
     watch<R extends MetadataObject = MetadataObject>(url: string, onUpdate: (o: WatchEvent<R>) => any, onError: (err: any) => any, opts?: WatchOptions): Promise<WatchResult>;
@@ -31,7 +40,6 @@ export interface IKubernetesRESTClient {
 const joinURL = (left: string, right: string) => (left + "/" + right).replace(/([^:])(\/\/)/g, "$1/");
 
 export class KubernetesRESTClient implements IKubernetesRESTClient {
-
 
     public constructor(private config: IKubernetesClientConfig) {
     }
@@ -78,6 +86,12 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
 
     public put<R = any>(url: string, body: any): Promise<R> {
         return this.request<R>(url, body, "PUT");
+    }
+
+    public patch<R = any>(url: string, body: any, patchKind: PatchKind): Promise<R> {
+        return this.request<R>(url, body, "PATCH", {headers: {
+            "Content-Type": patchKind,
+        }});
     }
 
     public delete<R = any>(url: string, labelSelector?: LabelSelector, queryParams: {[k: string]: string} = {}, body?: any): Promise<R> {

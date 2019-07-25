@@ -1,9 +1,10 @@
-import {IKubernetesRESTClient, WatchOptions, WatchResult} from "./client";
+import {IKubernetesRESTClient, PatchKindStrategicMergePatch, WatchOptions, WatchResult} from "./client";
 import {APIObject, MetadataObject, ResourceList} from "./types/meta";
 import {DeleteOptions, WatchEvent} from "./types/meta/v1";
 import {LabelSelector} from "./label";
 import {WatchHandle} from "./watch";
 import {Counter, Gauge, Registry} from "prom-client";
+import {JSONPatch, JSONPatchElement, RecursivePartial} from "./api_patch";
 
 const debug = require("debug")("kubernetes:resource");
 
@@ -11,25 +12,39 @@ const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
 
 export interface IResourceClient<R extends MetadataObject, K, V, O extends R = R> {
     list(labelSelector?: LabelSelector): Promise<Array<APIObject<K, V> & O>>;
+
     get(name: string): Promise<(APIObject<K, V> & O) | undefined>;
+
     apply(resource: R): Promise<APIObject<K, V> & O>;
+
     put(resource: R): Promise<APIObject<K, V> & O>;
+
     post(resource: R): Promise<APIObject<K, V> & O>;
-    delete(resourceOrName: R|string, deleteOptions?: DeleteOptions): Promise<void>;
+
+    patchStrategic(resourceOrName: R|string, patch: RecursivePartial<R>): Promise<APIObject<K, V> & O>;
+
+    patchJSON(resourceOrName: R|string, patch: JSONPatch): Promise<R>;
+
+    delete(resourceOrName: R | string, deleteOptions?: DeleteOptions): Promise<void>;
+
     deleteMany(labelSelector: LabelSelector): Promise<void>;
+
     watch(handler: (event: WatchEvent<O>) => any, errorHandler?: (error: any) => any, opts?: WatchOptions): Promise<WatchResult>;
+
     listWatch(handler: (event: WatchEvent<O>) => any, errorHandler?: (error: any) => any, opts?: WatchOptions): WatchHandle;
 }
 
 export interface INamespacedResourceClient<R extends MetadataObject, K, V, O extends R = R> extends IResourceClient<R, K, V, O> {
     namespace(ns: string): INamespacedResourceClient<R, K, V, O>;
+
     allNamespaces(): INamespacedResourceClient<R, K, V, O>;
 }
 
 export class CustomResourceClient<R extends MetadataObject, K, V, O extends R = R> implements INamespacedResourceClient<R, K, V, O> {
     public constructor(private inner: INamespacedResourceClient<R, K, V, O>,
                        private kind: K,
-                       private apiVersion: V) {}
+                       private apiVersion: V) {
+    }
 
     public list(labelSelector?: LabelSelector): Promise<Array<APIObject<K, V> & O>> {
         return this.inner.list(labelSelector);
@@ -65,6 +80,14 @@ export class CustomResourceClient<R extends MetadataObject, K, V, O extends R = 
 
     public listWatch(handler: (event: WatchEvent<O>) => any, errorHandler?: (error: any) => any, opts?: WatchOptions): WatchHandle {
         return this.inner.listWatch(handler, errorHandler, opts);
+    }
+
+    public patchJSON(resourceOrName: string | R, patch: JSONPatchElement[]): Promise<R> {
+        return this.inner.patchJSON(resourceOrName, patch);
+    }
+
+    public patchStrategic(resourceOrName: string | R, patch: RecursivePartial<R>): Promise<APIObject<K, V> & O> {
+        return this.inner.patchStrategic(resourceOrName, patch);
     }
 
     public namespace(ns: string): INamespacedResourceClient<R, K, V, O> {
@@ -118,6 +141,10 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
         return this.baseURL + "/" + r.metadata.name;
     }
 
+    protected urlForResourceOrName(r: R|string): string {
+        return (typeof r === "string") ? this.baseURL + "/" + r : this.urlForResource(r);
+    }
+
     public async list(labelSelector?: LabelSelector): Promise<Array<APIObject<K, V> & O>> {
         const list = await this.client.get(this.baseURL, labelSelector);
         return list.items || [];
@@ -163,7 +190,7 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
                     resourceVersion = Math.max(resourceVersion, result.resourceVersion);
                     errorCount = 0;
                 } catch (err) {
-                    errorCount ++;
+                    errorCount++;
 
                     ResourceClient.watchResyncErrorCount.inc({baseURL: this.baseURL});
 
@@ -214,7 +241,15 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
         return await this.client.post(this.baseURL, resource);
     }
 
-    public async delete(resourceOrName: R|string, deleteOptions?: DeleteOptions): Promise<void> {
+    public async patchStrategic(resourceOrName: R|string, patch: RecursivePartial<R>): Promise<APIObject<K, V> & O> {
+        return await this.client.patch(this.urlForResourceOrName(resourceOrName), patch, PatchKindStrategicMergePatch);
+    }
+
+    public async patchJSON(resourceOrName: R|string, patch: JSONPatch): Promise<APIObject<K, V> & O> {
+        return await this.client.patch(this.urlForResourceOrName(resourceOrName), patch, PatchKindStrategicMergePatch);
+    }
+
+    public async delete(resourceOrName: R | string, deleteOptions?: DeleteOptions): Promise<void> {
         let url;
         if (typeof resourceOrName === "string") {
             url = this.baseURL + "/" + resourceOrName;

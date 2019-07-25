@@ -1,4 +1,6 @@
 
+// Credits to Jeffrey Patterson [1]
+//   [1] https://stackoverflow.com/a/51365037/1995300
 export type RecursivePartial<T> = {
     [P in keyof T]?:
     T[P] extends Array<infer U> ? Array<RecursivePartial<U>> :

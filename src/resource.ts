@@ -1,4 +1,4 @@
-import {IKubernetesRESTClient, PatchKindStrategicMergePatch, WatchOptions, WatchResult} from "./client";
+import {IKubernetesRESTClient, patchKindJSONPatch, patchKindStrategicMergePatch, WatchOptions, WatchResult} from "./client";
 import {APIObject, MetadataObject, ResourceList} from "./types/meta";
 import {DeleteOptions, WatchEvent} from "./types/meta/v1";
 import {LabelSelector} from "./label";
@@ -242,11 +242,11 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
     }
 
     public async patchStrategic(resourceOrName: R|string, patch: RecursivePartial<R>): Promise<APIObject<K, V> & O> {
-        return await this.client.patch(this.urlForResourceOrName(resourceOrName), patch, PatchKindStrategicMergePatch);
+        return await this.client.patch(this.urlForResourceOrName(resourceOrName), patch, patchKindStrategicMergePatch);
     }
 
     public async patchJSON(resourceOrName: R|string, patch: JSONPatch): Promise<APIObject<K, V> & O> {
-        return await this.client.patch(this.urlForResourceOrName(resourceOrName), patch, PatchKindStrategicMergePatch);
+        return await this.client.patch(this.urlForResourceOrName(resourceOrName), patch, patchKindJSONPatch);
     }
 
     public async delete(resourceOrName: R | string, deleteOptions?: DeleteOptions): Promise<void> {

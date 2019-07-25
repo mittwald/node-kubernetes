@@ -8,7 +8,6 @@ const debug = require("debug")("kubernetes:client");
 
 export type RequestMethod = "GET"|"POST"|"PUT"|"PATCH"|"DELETE";
 
-
 export interface WatchOptions {
     labelSelector?: LabelSelector;
     resourceVersion?: number;
@@ -20,13 +19,13 @@ export interface WatchResult {
     resourceVersion: number;
 }
 
-export const PatchKindStrategicMergePatch = "application/stategic-merge-patch+json";
-export const PatchKindMergePatch = "application/merge-patch+json";
-export const PatchKindJSONPatch = "application/json-patch+json";
+export const patchKindStrategicMergePatch = "application/stategic-merge-patch+json";
+export const patchKindMergePatch = "application/merge-patch+json";
+export const patchKindJSONPatch = "application/json-patch+json";
 export type PatchKind =
-    | typeof PatchKindStrategicMergePatch
-    | typeof PatchKindMergePatch
-    | typeof PatchKindJSONPatch;
+    | typeof patchKindStrategicMergePatch
+    | typeof patchKindMergePatch
+    | typeof patchKindJSONPatch;
 
 export interface IKubernetesRESTClient {
     post<R = any>(url: string, body: any): Promise<R>;
@@ -179,7 +178,7 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
                 }
 
                 if (isStatus(body) && body.status === "Failure") {
-                    debug(`watch: failed with status %O`, body)
+                    debug(`watch: failed with status %O`, body);
                     rej(body.message);
                     return;
                 }

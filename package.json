@@ -22,7 +22,7 @@
     "bottleneck": "^2.15.0",
     "debug": "^3.1.0",
     "jsonschema": "^1.2.4",
-    "lodash": "^4.17.4",
+    "lodash": "^4.17.13",
     "prom-client": "^11.0.0",
     "request": "^2.83.0",
     "yamljs": "^0.3.0"

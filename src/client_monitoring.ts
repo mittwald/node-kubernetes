@@ -1,4 +1,4 @@
-import {IKubernetesRESTClient, WatchResult} from "./client";
+import {IKubernetesRESTClient, PatchKind, WatchResult} from "./client";
 import {Counter, Histogram, Registry} from "prom-client";
 import {LabelSelector} from "./label";
 import {WatchEvent} from "./types/meta/v1";
@@ -51,6 +51,10 @@ export class MonitoringKubernetesRESTClient implements IKubernetesRESTClient {
 
     public async get<R>(url: string, labelSelector?: LabelSelector): Promise<R | undefined> {
         return this.wrap("get", () => this.inner.get(url, labelSelector));
+    }
+
+    public patch<R = any>(url: string, body: any, patchKind: PatchKind): Promise<R> {
+        return this.wrap("patch", () => this.inner.patch(url, body, patchKind));
     }
 
     public watch<R extends MetadataObject>(url: string, onUpdate: (o: WatchEvent<R>) => any, onError: (err: any) => any, labelSelector?: LabelSelector): Promise<WatchResult> {

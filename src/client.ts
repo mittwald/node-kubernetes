@@ -8,7 +8,6 @@ const debug = require("debug")("kubernetes:client");
 
 export type RequestMethod = "GET"|"POST"|"PUT"|"PATCH"|"DELETE";
 
-
 export interface WatchOptions {
     labelSelector?: LabelSelector;
     resourceVersion?: number;
@@ -20,9 +19,18 @@ export interface WatchResult {
     resourceVersion: number;
 }
 
+export const patchKindStrategicMergePatch = "application/stategic-merge-patch+json";
+export const patchKindMergePatch = "application/merge-patch+json";
+export const patchKindJSONPatch = "application/json-patch+json";
+export type PatchKind =
+    | typeof patchKindStrategicMergePatch
+    | typeof patchKindMergePatch
+    | typeof patchKindJSONPatch;
+
 export interface IKubernetesRESTClient {
     post<R = any>(url: string, body: any): Promise<R>;
     put<R = any>(url: string, body: any): Promise<R>;
+    patch<R = any>(url: string, body: any, patchKind: PatchKind): Promise<R>;
     delete<R = any>(url: string, labelSelector?: LabelSelector, queryParams?: {[k: string]: string}, body?: any): Promise<R>;
     get<R = any>(url: string, labelSelector?: LabelSelector): Promise<R|undefined>;
     watch<R extends MetadataObject = MetadataObject>(url: string, onUpdate: (o: WatchEvent<R>) => any, onError: (err: any) => any, opts?: WatchOptions): Promise<WatchResult>;
@@ -31,7 +39,6 @@ export interface IKubernetesRESTClient {
 const joinURL = (left: string, right: string) => (left + "/" + right).replace(/([^:])(\/\/)/g, "$1/");
 
 export class KubernetesRESTClient implements IKubernetesRESTClient {
-
 
     public constructor(private config: IKubernetesClientConfig) {
     }
@@ -78,6 +85,12 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
 
     public put<R = any>(url: string, body: any): Promise<R> {
         return this.request<R>(url, body, "PUT");
+    }
+
+    public patch<R = any>(url: string, body: any, patchKind: PatchKind): Promise<R> {
+        return this.request<R>(url, body, "PATCH", {headers: {
+            "Content-Type": patchKind,
+        }});
     }
 
     public delete<R = any>(url: string, labelSelector?: LabelSelector, queryParams: {[k: string]: string} = {}, body?: any): Promise<R> {
@@ -165,7 +178,7 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
                 }
 
                 if (isStatus(body) && body.status === "Failure") {
-                    debug(`watch: failed with status %O`, body)
+                    debug(`watch: failed with status %O`, body);
                     rej(body.message);
                     return;
                 }

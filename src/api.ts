@@ -5,7 +5,7 @@ import * as resourceAppsV1beta1 from "./apis/apps/v1beta1";
 import * as resourceExtensionsV1beta1 from "./apis/extensions/v1beta1";
 import {APIExtensionsAPI, AppsAPI, AutoscalingAPI, BatchAPI, CoreAPI, ExtensionsAPI, PolicyAPI, RBACAPI} from "./apis";
 import {MetadataObject} from "./types/meta";
-import {Registry} from "prom-client";
+import {register, Registry} from "prom-client";
 
 export interface IKubernetesAPI {
     extend<C>(name: string, customResourceAPI: C): this & C;
@@ -21,7 +21,7 @@ export interface IKubernetesAPI {
 
 export class KubernetesAPI implements IKubernetesAPI {
 
-    public constructor(private restClient: IKubernetesRESTClient, private registry: Registry) {
+    public constructor(private restClient: IKubernetesRESTClient, private registry: Registry = register) {
     }
 
     private nc<R extends MetadataObject, K, V, O extends R = R>(apiBaseURL: string, resourceBaseURL: string): INamespacedResourceClient<R, K, V, O> {

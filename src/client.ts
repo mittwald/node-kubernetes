@@ -58,6 +58,11 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
             }
 
             opts = this.config.mapRequestOptions(opts);
+
+            if (additionalOptions.headers) {
+                additionalOptions.headers = {...(opts.headers || {}), ...additionalOptions.headers};
+            }
+
             opts = {...opts, ...additionalOptions};
 
             debug(`executing ${method} request on ${opts.url}`);

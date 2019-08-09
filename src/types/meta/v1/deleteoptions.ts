@@ -1,3 +1,4 @@
+import {SelectorOptions} from "../../../client";
 
 export interface Preconditions {
     uid: string;
@@ -15,4 +16,4 @@ export interface NewDeleteOptions {
     propagationPolicy?: "Orphan"|"Background"|"Foreground";
 }
 
-export type DeleteOptions = DeprecatedDeleteOptions | NewDeleteOptions;
+export type DeleteOptions = SelectorOptions & (DeprecatedDeleteOptions | NewDeleteOptions);

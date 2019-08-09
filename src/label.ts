@@ -1,8 +1,8 @@
 import * as _ from "lodash";
 
-export interface LabelSelector {[l: string]: string; }
+export interface Selector {[l: string]: string; }
 
-export function labelSelectorToQueryString(selector: LabelSelector): string {
+export function selectorToQueryString(selector: Selector): string {
     const v: string[] = [];
 
     _.forEach(selector, (value, label) => {

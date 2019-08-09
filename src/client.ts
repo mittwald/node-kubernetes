@@ -1,19 +1,29 @@
 import * as request from "request";
 import {IKubernetesClientConfig} from "./config";
-import {LabelSelector, labelSelectorToQueryString} from "./label";
+import {Selector, selectorToQueryString} from "./label";
 import {isStatus, MetadataObject} from "./types/meta";
-import {WatchEvent} from "./types/meta/v1";
+import {DeleteOptions, WatchEvent} from "./types/meta/v1";
 
 const debug = require("debug")("kubernetes:client");
 
 export type RequestMethod = "GET"|"POST"|"PUT"|"PATCH"|"DELETE";
 
-export interface WatchOptions {
-    labelSelector?: LabelSelector;
+export type SelectorOptions = {
+    labelSelector?: Selector;
+    fieldSelector?: Selector;
+};
+
+export type MandatorySelectorOptions =
+    | {labelSelector: Selector}
+    | {fieldSelector: Selector};
+
+export type WatchOptions = SelectorOptions & {
     resourceVersion?: number;
     abortAfterErrorCount?: number;
     onError?: (err: any) => void;
-}
+};
+
+export type ListOptions = SelectorOptions;
 
 export interface WatchResult {
     resourceVersion: number;
@@ -31,8 +41,8 @@ export interface IKubernetesRESTClient {
     post<R = any>(url: string, body: any): Promise<R>;
     put<R = any>(url: string, body: any): Promise<R>;
     patch<R = any>(url: string, body: any, patchKind: PatchKind): Promise<R>;
-    delete<R = any>(url: string, labelSelector?: LabelSelector, queryParams?: {[k: string]: string}, body?: any): Promise<R>;
-    get<R = any>(url: string, labelSelector?: LabelSelector): Promise<R|undefined>;
+    delete<R = any>(url: string, opts?: DeleteOptions, queryParams?: {[k: string]: string}, body?: any): Promise<R>;
+    get<R = any>(url: string, opts?: ListOptions): Promise<R|undefined>;
     watch<R extends MetadataObject = MetadataObject>(url: string, onUpdate: (o: WatchEvent<R>) => any, onError: (err: any) => any, opts?: WatchOptions): Promise<WatchResult>;
 }
 
@@ -98,11 +108,17 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
         }});
     }
 
-    public delete<R = any>(url: string, labelSelector?: LabelSelector, queryParams: {[k: string]: string} = {}, body?: any): Promise<R> {
+    public delete<R = any>(url: string, deleteOptions?: ListOptions, queryParams: {[k: string]: string} = {}, body?: any): Promise<R> {
         const opts: request.CoreOptions = {};
 
-        if (labelSelector) {
-            opts.qs = {...queryParams, labelSelector: labelSelectorToQueryString(labelSelector)};
+        opts.qs = queryParams;
+
+        if (deleteOptions && deleteOptions.labelSelector) {
+            opts.qs.labelSelector = selectorToQueryString(deleteOptions.labelSelector);
+        }
+
+        if (deleteOptions && deleteOptions.fieldSelector) {
+            opts.qs.fieldSelector = selectorToQueryString(deleteOptions.fieldSelector);
         }
 
         return this.request<R>(url, body, "DELETE", opts);
@@ -120,7 +136,11 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
         };
 
         if (watchOpts.labelSelector) {
-            opts.qs.labelSelector = labelSelectorToQueryString(watchOpts.labelSelector);
+            opts.qs.labelSelector = selectorToQueryString(watchOpts.labelSelector);
+        }
+
+        if (watchOpts.fieldSelector) {
+            opts.qs.fieldSelector = selectorToQueryString(watchOpts.fieldSelector);
         }
 
         if (watchOpts.resourceVersion) {
@@ -218,8 +238,9 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
         });
     }
 
-    public get<R = any>(url: string, labelSelector?: LabelSelector): Promise<R|undefined> {
+    public get<R = any>(url: string, listOptions: ListOptions = {}): Promise<R|undefined> {
         const absoluteURL = joinURL(this.config.apiServerURL, url);
+        const {labelSelector, fieldSelector} = listOptions;
 
         return new Promise<R|undefined>((res, rej) => {
             let opts: request.OptionsWithUrl = {
@@ -228,7 +249,11 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
             };
 
             if (labelSelector) {
-                opts.qs.labelSelector = labelSelectorToQueryString(labelSelector);
+                opts.qs.labelSelector = selectorToQueryString(labelSelector);
+            }
+
+            if (fieldSelector) {
+                opts.qs.fieldSelector = selectorToQueryString(fieldSelector);
             }
 
             opts = this.config.mapRequestOptions(opts);

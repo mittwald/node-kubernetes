@@ -1,7 +1,6 @@
-import {IKubernetesRESTClient, patchKindJSONPatch, patchKindStrategicMergePatch, WatchOptions, WatchResult} from "./client";
+import {IKubernetesRESTClient, ListOptions, MandatorySelectorOptions, patchKindJSONPatch, patchKindStrategicMergePatch, WatchOptions, WatchResult} from "./client";
 import {APIObject, MetadataObject, ResourceList} from "./types/meta";
 import {DeleteOptions, WatchEvent} from "./types/meta/v1";
-import {LabelSelector} from "./label";
 import {WatchHandle} from "./watch";
 import {Counter, Gauge, Registry} from "prom-client";
 import {JSONPatch, JSONPatchElement, RecursivePartial} from "./api_patch";
@@ -11,7 +10,7 @@ const debug = require("debug")("kubernetes:resource");
 const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
 
 export interface IResourceClient<R extends MetadataObject, K, V, O extends R = R> {
-    list(labelSelector?: LabelSelector): Promise<Array<APIObject<K, V> & O>>;
+    list(listOptions?: ListOptions): Promise<Array<APIObject<K, V> & O>>;
 
     get(name: string): Promise<(APIObject<K, V> & O) | undefined>;
 
@@ -27,7 +26,7 @@ export interface IResourceClient<R extends MetadataObject, K, V, O extends R = R
 
     delete(resourceOrName: R | string, deleteOptions?: DeleteOptions): Promise<void>;
 
-    deleteMany(labelSelector: LabelSelector): Promise<void>;
+    deleteMany(opts: MandatorySelectorOptions & DeleteOptions): Promise<void>;
 
     watch(handler: (event: WatchEvent<O>) => any, errorHandler?: (error: any) => any, opts?: WatchOptions): Promise<WatchResult>;
 
@@ -46,8 +45,8 @@ export class CustomResourceClient<R extends MetadataObject, K, V, O extends R = 
                        private apiVersion: V) {
     }
 
-    public list(labelSelector?: LabelSelector): Promise<Array<APIObject<K, V> & O>> {
-        return this.inner.list(labelSelector);
+    public list(listOptions?: ListOptions): Promise<Array<APIObject<K, V> & O>> {
+        return this.inner.list(listOptions);
     }
 
     public get(name: string): Promise<(APIObject<K, V> & O) | undefined> {
@@ -70,8 +69,8 @@ export class CustomResourceClient<R extends MetadataObject, K, V, O extends R = 
         return this.inner.delete(resourceOrName, deleteOptions);
     }
 
-    public deleteMany(labelSelector: LabelSelector): Promise<void> {
-        return this.inner.deleteMany(labelSelector);
+    public deleteMany(opts: MandatorySelectorOptions & DeleteOptions): Promise<void> {
+        return this.inner.deleteMany(opts);
     }
 
     public watch(handler: (event: WatchEvent<O>) => any, errorHandler?: (error: any) => any, opts?: WatchOptions): Promise<WatchResult> {
@@ -145,8 +144,8 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
         return (typeof r === "string") ? this.baseURL + "/" + r : this.urlForResource(r);
     }
 
-    public async list(labelSelector?: LabelSelector): Promise<Array<APIObject<K, V> & O>> {
-        const list = await this.client.get(this.baseURL, labelSelector);
+    public async list(opts?: ListOptions): Promise<Array<APIObject<K, V> & O>> {
+        const list = await this.client.get(this.baseURL, opts);
         return list.items || [];
     }
 
@@ -166,7 +165,7 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
         ResourceClient.watchOpenCount.inc({baseURL: this.baseURL});
         debug("starting list-watch on %o", this.resourceBaseURL);
 
-        const resync = () => this.client.get(this.baseURL, opts.labelSelector)
+        const resync = () => this.client.get(this.baseURL, opts)
             .then((list: ResourceList<O>) => {
                 resourceVersion = parseInt(list.metadata.resourceVersion, 10);
 
@@ -257,15 +256,15 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
             url = this.urlForResource(resourceOrName);
         }
 
-        return await this.client.delete(url, undefined, undefined, deleteOptions);
+        return await this.client.delete(url, deleteOptions);
     }
 
-    public async deleteMany(labelSelector: LabelSelector) {
+    public async deleteMany(opts: MandatorySelectorOptions & DeleteOptions) {
         if (this.supportsCollectionDeletion) {
-            return await this.client.delete(this.baseURL, labelSelector);
+            return await this.client.delete(this.baseURL, opts);
         }
 
-        const resources = await this.list(labelSelector);
+        const resources = await this.list(opts);
         await Promise.all(resources.map(r => this.delete(r)));
     }
 

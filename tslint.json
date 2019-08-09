@@ -15,7 +15,8 @@
     "no-var-requires": false,
     "arrow-parens": false,
     "no-unused-expression": false,
-    "no-empty": false
+    "no-empty": false,
+    "interface-over-type-literal": false
   },
   "rulesDirectory": []
 }

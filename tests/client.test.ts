@@ -32,7 +32,7 @@ describe(KubernetesRESTClient.name, () => {
         test("can load resources from server with label selectors", async () => {
             scope.get("/api/v1/foo/1").query({labelSelector: "spaces.de/test=foo"}).reply(200, {kind: "Test"});
 
-            const response = await client.get("/api/v1/foo/1", {"spaces.de/test": "foo"});
+            const response = await client.get("/api/v1/foo/1", {labelSelector: {"spaces.de/test": "foo"}});
             expect(response).toHaveProperty("kind", "Test");
         });
 
@@ -119,7 +119,7 @@ describe(KubernetesRESTClient.name, () => {
                 .query({labelSelector: "spaces.de/foo=bar"})
                 .reply(200, {kind: "Test", bar: "baz"});
 
-            const response = await client.delete("/api/v1/foo/1", {"spaces.de/foo": "bar"});
+            const response = await client.delete("/api/v1/foo/1", {labelSelector: {"spaces.de/foo": "bar"}});
             expect(response).toHaveProperty("kind", "Test");
             expect(response).toHaveProperty("bar", "baz");
         });

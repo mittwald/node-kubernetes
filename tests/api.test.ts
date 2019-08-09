@@ -68,7 +68,7 @@ describe("Kubernetes API client", () => {
                 .query({labelSelector: "spaces.de/test=test"})
                 .reply(200, podListData);
 
-            const podList = await api.pods().namespace("test").list({"spaces.de/test": "test"});
+            const podList = await api.pods().namespace("test").list({labelSelector: {"spaces.de/test": "test"}});
             expect(podList).toHaveLength(2);
         });
 
@@ -128,7 +128,7 @@ describe("Kubernetes API client", () => {
                 .delete("/api/v1/namespaces/test/pods")
                 .query({labelSelector: "spaces.de/test=foo"})
                 .reply(200, {});
-            await api.pods().namespace("test").deleteMany({"spaces.de/test": "foo"});
+            await api.pods().namespace("test").deleteMany({labelSelector: {"spaces.de/test": "foo"}});
         });
 
     });
@@ -156,7 +156,7 @@ describe("Kubernetes API client", () => {
             scope.delete("/api/v1/namespaces/test/services/foo-svc").reply(200);
             scope.delete("/api/v1/namespaces/test/services/bar-svc").reply(200);
 
-            await api.services().namespace("test").deleteMany({"spaces.de/test": "foo"});
+            await api.services().namespace("test").deleteMany({labelSelector: {"spaces.de/test": "foo"}});
             expect(scope.isDone()).toBeTruthy();
         });
 

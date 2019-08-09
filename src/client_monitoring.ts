@@ -1,7 +1,6 @@
-import {IKubernetesRESTClient, PatchKind, WatchResult} from "./client";
+import {IKubernetesRESTClient, ListOptions, PatchKind, WatchOptions, WatchResult} from "./client";
 import {Counter, Histogram, Registry} from "prom-client";
-import {LabelSelector} from "./label";
-import {WatchEvent} from "./types/meta/v1";
+import {DeleteOptions, WatchEvent} from "./types/meta/v1";
 import {MetadataObject} from "./types/meta";
 
 export class MonitoringKubernetesRESTClient implements IKubernetesRESTClient {
@@ -45,20 +44,20 @@ export class MonitoringKubernetesRESTClient implements IKubernetesRESTClient {
         return this.wrap("put", () => this.inner.put(url, body));
     }
 
-    public async delete<R>(url: string, labelSelector?: LabelSelector, queryParams?: { [p: string]: string }, body?: any): Promise<R> {
-        return this.wrap("delete", () => this.inner.delete(url, labelSelector, queryParams, body));
+    public async delete<R>(url: string, opts?: DeleteOptions, queryParams?: { [p: string]: string }, body?: any): Promise<R> {
+        return this.wrap("delete", () => this.inner.delete(url, opts, queryParams, body));
     }
 
-    public async get<R>(url: string, labelSelector?: LabelSelector): Promise<R | undefined> {
-        return this.wrap("get", () => this.inner.get(url, labelSelector));
+    public async get<R>(url: string, opts?: ListOptions): Promise<R | undefined> {
+        return this.wrap("get", () => this.inner.get(url, opts));
     }
 
     public patch<R = any>(url: string, body: any, patchKind: PatchKind): Promise<R> {
         return this.wrap("patch", () => this.inner.patch(url, body, patchKind));
     }
 
-    public watch<R extends MetadataObject>(url: string, onUpdate: (o: WatchEvent<R>) => any, onError: (err: any) => any, labelSelector?: LabelSelector): Promise<WatchResult> {
-        return this.wrap("watch", () => this.inner.watch(url, onUpdate, onError, labelSelector));
+    public watch<R extends MetadataObject>(url: string, onUpdate: (o: WatchEvent<R>) => any, onError: (err: any) => any, opts?: WatchOptions): Promise<WatchResult> {
+        return this.wrap("watch", () => this.inner.watch(url, onUpdate, onError, opts));
     }
 
 }

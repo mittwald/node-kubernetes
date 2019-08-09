@@ -1,13 +1,14 @@
 import {InMemoryStore, ObservableStore, ObservableStoreDecorator, Store} from "./store";
 import {MetadataObject} from "../types/meta";
 import {IResourceClient} from "../resource";
-import {LabelSelector} from "../label";
 import {WatchEvent} from "../types/meta/v1";
+import {SelectorOptions} from "../client";
 
 const debug = require("debug")("kubernetes:informer");
 
 export interface Controller {
     waitForInitialList(): Promise<void>;
+    waitUntilFinish(): Promise<void>;
     stop(): void;
 }
 
@@ -16,7 +17,7 @@ export class Informer<R extends MetadataObject, O extends R = R> {
 
     public constructor(
         private resource: IResourceClient<R, any, any, O>,
-        private labelSelector?: LabelSelector,
+        private opts?: SelectorOptions,
         store?: Store<O>,
     ) {
         this.store = new ObservableStoreDecorator(store || new InMemoryStore());
@@ -39,10 +40,11 @@ export class Informer<R extends MetadataObject, O extends R = R> {
             }
         };
 
-        const watchHandle = this.resource.listWatch(handler, undefined, {labelSelector: this.labelSelector});
+        const watchHandle = this.resource.listWatch(handler, undefined, this.opts);
 
         return {
             waitForInitialList: () => watchHandle.initialized,
+            waitUntilFinish: () => watchHandle.done,
             stop: watchHandle.stop,
         };
     }

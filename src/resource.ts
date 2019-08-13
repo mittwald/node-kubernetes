@@ -1,4 +1,13 @@
-import {IKubernetesRESTClient, ListOptions, MandatorySelectorOptions, patchKindJSONPatch, patchKindStrategicMergePatch, WatchOptions, WatchResult} from "./client";
+import {
+    IKubernetesRESTClient,
+    ListOptions,
+    MandatorySelectorOptions,
+    patchKindJSONPatch,
+    patchKindMergePatch,
+    patchKindStrategicMergePatch,
+    WatchOptions,
+    WatchResult,
+} from "./client";
 import {APIObject, MetadataObject, ResourceList} from "./types/meta";
 import {DeleteOptions, WatchEvent} from "./types/meta/v1";
 import {WatchHandle} from "./watch";
@@ -21,6 +30,8 @@ export interface IResourceClient<R extends MetadataObject, K, V, O extends R = R
     post(resource: R): Promise<APIObject<K, V> & O>;
 
     patchStrategic(resourceOrName: R|string, patch: RecursivePartial<R>): Promise<APIObject<K, V> & O>;
+
+    patchMerge(resourceOrName: R|string, patch: RecursivePartial<R>): Promise<APIObject<K, V> & O>;
 
     patchJSON(resourceOrName: R|string, patch: JSONPatch): Promise<R>;
 
@@ -87,6 +98,10 @@ export class CustomResourceClient<R extends MetadataObject, K, V, O extends R = 
 
     public patchStrategic(resourceOrName: string | R, patch: RecursivePartial<R>): Promise<APIObject<K, V> & O> {
         return this.inner.patchStrategic(resourceOrName, patch);
+    }
+
+    public patchMerge(resourceOrName: string | R, patch: RecursivePartial<R>): Promise<APIObject<K, V> & O> {
+        return this.inner.patchMerge(resourceOrName, patch);
     }
 
     public namespace(ns: string): INamespacedResourceClient<R, K, V, O> {
@@ -242,6 +257,10 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
 
     public async patchStrategic(resourceOrName: R|string, patch: RecursivePartial<R>): Promise<APIObject<K, V> & O> {
         return await this.client.patch(this.urlForResourceOrName(resourceOrName), patch, patchKindStrategicMergePatch);
+    }
+
+    public async patchMerge(resourceOrName: R|string, patch: RecursivePartial<R>): Promise<APIObject<K, V> & O> {
+        return await this.client.patch(this.urlForResourceOrName(resourceOrName), patch, patchKindMergePatch);
     }
 
     public async patchJSON(resourceOrName: R|string, patch: JSONPatch): Promise<APIObject<K, V> & O> {

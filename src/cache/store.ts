@@ -67,11 +67,19 @@ export class InMemoryStore<R extends MetadataObject> implements Store<R> {
 export class CachingLookupStore<R extends MetadataObject> implements Store<R> {
     private cache = new Map<string, CacheEntry<R>>();
 
-    public constructor(private api: INamespacedResourceClient<R, any, any>) {
+    public constructor(private api: INamespacedResourceClient<R, any, any>, private expirationSeconds: number = 3600) {
     }
 
     public store(obj: R): void {
-        // no-op
+        const {namespace, name} = obj.metadata;
+        const key = `${namespace}/${name}`;
+        const exp = new Date();
+        exp.setSeconds(exp.getSeconds() + this.expirationSeconds);
+
+        this.cache.set(key, {
+            entry: obj,
+            until: exp,
+        });
     }
 
     public async get(namespace: string, name: string): Promise<R | undefined> {
@@ -87,20 +95,17 @@ export class CachingLookupStore<R extends MetadataObject> implements Store<R> {
         const result = await this.api.namespace(namespace).get(name);
 
         if (result) {
-            const exp = new Date();
-            exp.setSeconds(exp.getSeconds() + 3600);
-
-            this.cache.set(key, {
-                entry: result,
-                until: exp,
-            });
+            this.store(result);
         }
 
         return result;
     }
 
     public pull(obj: R): void {
-        // no-op
+        const {namespace, name} = obj.metadata;
+        const key = `${namespace}/${name}`;
+
+        this.cache.delete(key);
     }
 
 }

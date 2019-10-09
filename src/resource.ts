@@ -180,6 +180,7 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
         ResourceClient.watchOpenCount.inc({baseURL: this.baseURL});
         debug("starting list-watch on %o", this.resourceBaseURL);
 
+        const {resyncAfterIterations = 10} = opts;
         const resync = () => this.client.get(this.baseURL, opts)
             .then((list: ResourceList<O>) => {
                 resourceVersion = parseInt(list.metadata.resourceVersion, 10);
@@ -195,14 +196,28 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
         const done = initialized.then(async () => {
             errorHandler = errorHandler || (() => {});
             let errorCount = 0;
+            let successCount = 0;
 
             debug("initial list for list-watch on %o completed", this.resourceBaseURL);
 
             while (running) {
                 try {
+                    if (successCount > resyncAfterIterations) {
+                        debug(`resyncing after ${resyncAfterIterations} successful WATCH iterations`);
+                        await resync();
+                    }
+
                     const result = await this.client.watch(this.baseURL, handler, errorHandler, {...opts, resourceVersion});
+                    if (result.resyncRequired) {
+                        debug(`resyncing listwatch`);
+                        await resync();
+
+                        continue;
+                    }
+
                     resourceVersion = Math.max(resourceVersion, result.resourceVersion);
                     errorCount = 0;
+                    successCount ++;
                 } catch (err) {
                     errorCount++;
 

@@ -20,6 +20,7 @@ export type MandatorySelectorOptions =
 export type WatchOptions = SelectorOptions & {
     resourceVersion?: number;
     abortAfterErrorCount?: number;
+    resyncAfterIterations?: number;
     onError?: (err: any) => void;
 };
 
@@ -27,6 +28,7 @@ export type ListOptions = SelectorOptions;
 
 export interface WatchResult {
     resourceVersion: number;
+    resyncRequired?: boolean;
 }
 
 export const patchKindStrategicMergePatch = "application/stategic-merge-patch+json";
@@ -130,7 +132,7 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
                                                             watchOpts: WatchOptions = {}): Promise<WatchResult> {
         const absoluteURL = joinURL(this.config.apiServerURL, url);
 
-        let opts: request.Options = {
+        let opts: request.OptionsWithUrl = {
             url: absoluteURL,
             qs: {watch: "true"},
         };
@@ -160,7 +162,15 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
                     return;
                 }
 
+                debug(`%o request on %o completed with status %o: %O`, "WATCH", opts.url, response.statusCode, bodyString);
+
                 if (response.statusCode && response.statusCode >= 400) {
+                    if (response.statusCode === 410) {
+                        debug(`last known resource has expired -- resync required`);
+                        res({resourceVersion: lastVersion, resyncRequired: true});
+                        return;
+                    }
+
                     rej(new Error("Unexpected status code: " + response.statusCode));
                     return;
                 }
@@ -178,6 +188,10 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
                 } catch (err) {
                     const bodyLines = bodyString.split("\n");
                     for (const line of bodyLines) {
+                        if (line === "") {
+                            continue;
+                        }
+
                         try {
                             const parsedLine: WatchEvent<R> = JSON.parse(line);
                             if (parsedLine.type === "ADDED" || parsedLine.type === "MODIFIED" || parsedLine.type === "DELETED") {
@@ -191,9 +205,7 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
                             }
                         } catch (err) {
                             debug(`watch: could not parse JSON line '${line}'`);
-                            if (line === "") {
-                                continue;
-                            }
+
                             rej(err);
                             return;
                         }
@@ -218,6 +230,7 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
                     chunk = chunk.toString("utf-8");
                 }
 
+                debug("WATCH request on %o received %d bytes of data", opts.url, chunk.length);
                 buffer += chunk;
 
                 try {
@@ -267,6 +280,8 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
                 }
 
                 if (response.statusCode === 404) {
+                    debug(`GET request on %o failed with status %o`, opts.url, response.statusCode);
+
                     res(undefined);
                     return;
                 }

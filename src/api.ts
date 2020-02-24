@@ -6,10 +6,12 @@ import * as resourceExtensionsV1beta1 from "./apis/extensions/v1beta1";
 import {APIExtensionsAPI, AppsAPI, AutoscalingAPI, BatchAPI, CoreAPI, ExtensionsAPI, PolicyAPI, RBACAPI} from "./apis";
 import {MetadataObject} from "./types/meta";
 import {register, Registry} from "prom-client";
+import {CertificatesAPI} from "./apis/certificates";
 
 export interface IKubernetesAPI {
     extend<C>(name: string, customResourceAPI: C): this & C;
     apiextensions(): APIExtensionsAPI;
+    certificates(): CertificatesAPI;
     core(): CoreAPI;
     apps(): AppsAPI;
     batch(): BatchAPI;
@@ -42,6 +44,14 @@ export class KubernetesAPI implements IKubernetesAPI {
         return {
             v1beta1: () => ({
                 customResourceDefinitions: () => this.c("/apis/apiextensions.k8s.io/v1", "/customresourcedefinitions"),
+            }),
+        };
+    }
+
+    public certificates(): CertificatesAPI {
+        return {
+            v1beta1: () => ({
+                certificateSigningRequests: () => this.c("/apis/certificates.k8s.io/v1beta1", "/certificatesigningrequests"),
             }),
         };
     }

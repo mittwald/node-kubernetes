@@ -17,14 +17,14 @@
   "license": "MIT",
   "dependencies": {
     "@types/lodash": "^4.14.86",
-    "@types/request": "^2.0.8",
+    "@types/request": "^2.48.4",
     "@types/yamljs": "^0.2.30",
     "bottleneck": "^2.15.0",
     "debug": "^3.1.0",
     "jsonschema": "^1.2.4",
     "lodash": "^4.17.13",
     "prom-client": "^11.0.0",
-    "request": "^2.83.0",
+    "request": "^2.88.2",
     "yamljs": "^0.3.0"
   },
   "devDependencies": {

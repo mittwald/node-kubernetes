@@ -21,7 +21,7 @@ export interface ValidatingWebhook {
     admissionReviewVersions: Array<"v1"|"v1beta">;
 }
 
-export type WebhookClientConfig = ({url: string} | {service: ServiceReference}) & {caBundle: string};
+export type WebhookClientConfig = ({url: string} | {service: ServiceReference}) & {caBundle?: string};
 
 export interface ServiceReference {
     namespace: string;

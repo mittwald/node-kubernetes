@@ -102,42 +102,45 @@ This library supports a reasonable subset of Kubernetes resources
 new issue or pull request to add support for additional API objects.
 
 - core/v1
-    - pods
-    - configMaps
-    - endpoints
-    - namespaces
-    - nodes
-    - persistentVolumes
-    - persistentVolumeClaims
-    - services
-    - secrets
-    - serviceAccounts
+    - [x] pods
+    - [x] configMaps
+    - [x] endpoints
+    - [x] namespaces
+    - [x] nodes
+    - [x] persistentVolumes
+    - [x] persistentVolumeClaims
+    - [x] services
+    - [x] secrets
+    - [x] serviceAccounts
 - apps/v1
-    - daemonSets
-    - deployments
-    - replicaSets
-    - statefulSets
+    - [x] daemonSets
+    - [x] deployments
+    - [x] replicaSets
+    - [x] statefulSets
 - apps/v1beta1
-    - deployments
-    - statefulSets
+    - [x] deployments
+    - [x] statefulSets
 - batch/v1
-    - jobs
+    - [x] jobs
 - batch/v1beta1
-    - cronJobs
+    - [x] cronJobs
 - extensions/v1beta1
-    - daemonSets
-    - ingresses
-    - networkPolicies
-    - replicaSets
+    - [x] daemonSets
+    - [x] ingresses
+    - [x] networkPolicies
+    - [x] replicaSets
 - rbac/v1
-    - clusterRoles
-    - clusterRoleBindings
-    - roles
-    - roleBindings
+    - [x] clusterRoles
+    - [x] clusterRoleBindings
+    - [x] roles
+    - [x] roleBindings
 - autoscaling/v1
-    - horizontalPodAutoscalers
+    - [x] horizontalPodAutoscalers
 - apiextensions.k8s.io/v1beta1
-    - customResourceDefinitions
+    - [x] customResourceDefinitions
+- admissionRegistration.k8s.io/v1
+    - [x] validatingWebhookConfigurations
+    - [ ] mutatingWebhookConfigurations
 
 ## References
 

@@ -46,7 +46,7 @@ export class KubernetesAPI implements IKubernetesAPI {
     public admissionRegistration(): AdmissionRegistrationAPI {
         return {
             v1: () => ({
-                validatingWebhookConfigurations: () => this.c(`/apis/${admregv1.apiGroup}`, "/"),
+                validatingWebhookConfigurations: () => this.c(`/apis/${admregv1.apiGroup}`, "/validatingwebhookconfigurations"),
             }),
         };
     }

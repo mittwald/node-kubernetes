@@ -3,13 +3,16 @@ import {INamespacedResourceClient, IResourceClient, NamespacedResourceClient, Re
 import * as corev1 from "./types/core/v1";
 import * as resourceAppsV1beta1 from "./apis/apps/v1beta1";
 import * as resourceExtensionsV1beta1 from "./apis/extensions/v1beta1";
+import * as admregv1 from "./types/admissionregistration/v1";
 import {APIExtensionsAPI, AppsAPI, AutoscalingAPI, BatchAPI, CoreAPI, ExtensionsAPI, PolicyAPI, RBACAPI} from "./apis";
 import {MetadataObject} from "./types/meta";
 import {register, Registry} from "prom-client";
 import {CertificatesAPI} from "./apis/certificates";
+import {AdmissionRegistrationAPI} from "./apis/admissionregistration";
 
 export interface IKubernetesAPI {
     extend<C>(name: string, customResourceAPI: C): this & C;
+    admissionRegistration(): AdmissionRegistrationAPI;
     apiextensions(): APIExtensionsAPI;
     certificates(): CertificatesAPI;
     core(): CoreAPI;
@@ -38,6 +41,14 @@ export class KubernetesAPI implements IKubernetesAPI {
         (this as any)[name] = () => (customResourceAPI as any)[name]();
 
         return this as any;
+    }
+
+    public admissionRegistration(): AdmissionRegistrationAPI {
+        return {
+            v1: () => ({
+                validatingWebhookConfigurations: () => this.c(`/apis/${admregv1.apiGroup}`, "/"),
+            }),
+        };
     }
 
     public apiextensions(): APIExtensionsAPI {

@@ -3,24 +3,27 @@ import {Counter, Histogram, Registry} from "prom-client";
 import {DeleteOptions, WatchEvent} from "./types/meta/v1";
 import {MetadataObject} from "./types/meta";
 
+const apiMetricLabels = ["method"];
+type APIMetricLabels = typeof apiMetricLabels[0];
+
 export class MonitoringKubernetesRESTClient implements IKubernetesRESTClient {
 
-    private requestLatencies: Histogram;
-    private errorCount: Counter;
+    private requestLatencies: Histogram<APIMetricLabels>;
+    private errorCount: Counter<APIMetricLabels>;
 
     public constructor(private inner: IKubernetesRESTClient, registry: Registry) {
         this.requestLatencies = new Histogram({
             name: "kubernetes_api_request_latency_milliseconds",
             help: "Latency in milliseconds for requests to the Kubernetes API server",
             registers: [registry],
-            labelNames: ["method"],
+            labelNames: apiMetricLabels,
         });
 
         this.errorCount = new Counter({
             name: "kubernetes_api_error_count",
             help: "Amount of errors that occurred on requests to the Kubernetes API server",
             registers: [registry],
-            labelNames: ["method"],
+            labelNames: apiMetricLabels,
         });
     }
 

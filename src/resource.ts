@@ -113,9 +113,12 @@ export class CustomResourceClient<R extends MetadataObject, K, V, O extends R = 
     }
 }
 
+const resourceMetricLabels = ["baseURL"];
+type ResourceMetricLabels = typeof resourceMetricLabels[0];
+
 export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> implements IResourceClient<R, K, V, O> {
-    private static watchResyncErrorCount: Counter;
-    private static watchOpenCount: Gauge;
+    private static watchResyncErrorCount: Counter<ResourceMetricLabels>;
+    private static watchOpenCount: Gauge<ResourceMetricLabels>;
 
     protected baseURL: string;
 
@@ -137,7 +140,7 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
                 name: "kubernetes_listwatch_resync_errors",
                 help: "Amount of resync errors while running listwatches",
                 registers: [registry],
-                labelNames: ["baseURL"],
+                labelNames: resourceMetricLabels,
             });
         }
 
@@ -146,7 +149,7 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
                 name: "kubernetes_listwatch_open",
                 help: "Amount of currently open listwatches",
                 registers: [registry],
-                labelNames: ["baseURL"],
+                labelNames: resourceMetricLabels,
             });
         }
     }

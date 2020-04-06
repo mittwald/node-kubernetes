@@ -1,4 +1,4 @@
-import * as request from "request";
+import request from "request";
 import {IKubernetesClientConfig} from "./config";
 import {Selector, selectorToQueryString} from "./label";
 import {isStatus, MetadataObject} from "./types/meta";

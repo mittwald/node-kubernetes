@@ -1,7 +1,13 @@
-import * as nock from "nock";
-import {GenericClientConfig, IKubernetesRESTClient, KubernetesAPI, KubernetesRESTClient, CoreV1API} from "../src";
+import nock from "nock";
+import {CoreV1API, GenericClientConfig, IKubernetesRESTClient, KubernetesAPI, KubernetesRESTClient} from "../src";
 import {Pod, PodList, ServiceList} from "../src/types/core/v1";
 import {Registry} from "prom-client";
+import { RequestBodyMatcher } from "nock";
+import deepEqual from "deep-equal";
+
+const matchesBody = <T>(expected: T): RequestBodyMatcher => (given: unknown): given is T => {
+    return deepEqual(expected, given);
+};
 
 describe("Kubernetes API client", () => {
     let scope: nock.Scope;
@@ -76,7 +82,7 @@ describe("Kubernetes API client", () => {
             const newPodInput: Pod = {metadata: {name: "some-pod"}, spec: {containers: [{name: "web", image: "nginx"}]}};
 
             scope
-                .post("/api/v1/namespaces/test/pods", newPodInput)
+                .post("/api/v1/namespaces/test/pods", matchesBody(newPodInput))
                 .reply(200, newPodInput);
 
             const pod = await api.pods().namespace("test").post(newPodInput);
@@ -87,7 +93,7 @@ describe("Kubernetes API client", () => {
             const podInput: Pod = {metadata: {name: "some-pod"}, spec: {containers: [{name: "web", image: "nginx"}]}};
 
             scope
-                .put("/api/v1/namespaces/test/pods/some-pod", podInput)
+                .put("/api/v1/namespaces/test/pods/some-pod", matchesBody(podInput))
                 .reply(200, podInput);
 
             const pod = await api.pods().namespace("test").put(podInput);
@@ -101,7 +107,7 @@ describe("Kubernetes API client", () => {
             };
 
             scope
-                .put("/api/v1/namespaces/override/pods/some-pod", podInput)
+                .put("/api/v1/namespaces/override/pods/some-pod", matchesBody(podInput))
                 .reply(200, podInput);
 
             const pod = await api.pods().namespace("test").put(podInput);

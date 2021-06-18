@@ -1,6 +1,6 @@
 import {InMemoryStore, ObservableStore, ObservableStoreDecorator, Store} from "./store";
 import {MetadataObject} from "../types/meta";
-import {IResourceClient} from "../resource";
+import {IResourceClient, ListWatchOptions} from "../resource";
 import {WatchEvent} from "../types/meta/v1";
 import {SelectorOptions} from "../client";
 
@@ -8,7 +8,9 @@ const debug = require("debug")("kubernetes:informer");
 
 export interface Controller {
     waitForInitialList(): Promise<void>;
+
     waitUntilFinish(): Promise<void>;
+
     stop(): void;
 }
 
@@ -40,7 +42,16 @@ export class Informer<R extends MetadataObject, O extends R = R> {
             }
         };
 
-        const watchHandle = this.resource.listWatch(handler, undefined, this.opts);
+        const opts: ListWatchOptions<O> = {
+            skipAddEventsOnResync: true,
+            onResync: (objs) => {
+                debug("resynced %d objects", objs.length);
+                this.store.sync(objs);
+            },
+            ...this.opts,
+        }
+
+        const watchHandle = this.resource.listWatch(handler, undefined, opts);
 
         return {
             waitForInitialList: () => watchHandle.initialized,

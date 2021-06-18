@@ -18,6 +18,11 @@ const debug = require("debug")("kubernetes:resource");
 
 const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
 
+export interface ListWatchOptions<R extends MetadataObject> extends WatchOptions {
+    onResync?: (objs: R[]) => any;
+    skipAddEventsOnResync?: boolean;
+}
+
 export interface IResourceClient<R extends MetadataObject, K, V, O extends R = R> {
     list(listOptions?: ListOptions): Promise<Array<APIObject<K, V> & O>>;
 
@@ -41,7 +46,7 @@ export interface IResourceClient<R extends MetadataObject, K, V, O extends R = R
 
     watch(handler: (event: WatchEvent<O>) => any, errorHandler?: (error: any) => any, opts?: WatchOptions): Promise<WatchResult>;
 
-    listWatch(handler: (event: WatchEvent<O>) => any, errorHandler?: (error: any) => any, opts?: WatchOptions): WatchHandle;
+    listWatch(handler: (event: WatchEvent<O>) => any, errorHandler?: (error: any) => any, opts?: ListWatchOptions<O>): WatchHandle;
 }
 
 export interface INamespacedResourceClient<R extends MetadataObject, K, V, O extends R = R> extends IResourceClient<R, K, V, O> {
@@ -88,7 +93,7 @@ export class CustomResourceClient<R extends MetadataObject, K, V, O extends R = 
         return this.inner.watch(handler, errorHandler, opts);
     }
 
-    public listWatch(handler: (event: WatchEvent<O>) => any, errorHandler?: (error: any) => any, opts?: WatchOptions): WatchHandle {
+    public listWatch(handler: (event: WatchEvent<O>) => any, errorHandler?: (error: any) => any, opts?: ListWatchOptions<O>): WatchHandle {
         return this.inner.listWatch(handler, errorHandler, opts);
     }
 
@@ -176,7 +181,7 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
         return this.client.watch(this.baseURL, handler, errorHandler, opts);
     }
 
-    public listWatch(handler: (event: WatchEvent<O>) => any, errorHandler?: (error: any) => any, opts: WatchOptions = {}): WatchHandle {
+    public listWatch(handler: (event: WatchEvent<O>) => any, errorHandler?: (error: any) => any, opts: ListWatchOptions<O> = {}): WatchHandle {
         let resourceVersion = 0;
         let running = true;
 
@@ -188,9 +193,15 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
             .then((list: ResourceList<O>) => {
                 resourceVersion = parseInt(list.metadata.resourceVersion, 10);
 
-                for (const i of list.items || []) {
-                    const event: WatchEvent<O> = {type: "ADDED", object: i};
-                    handler(event);
+                if (opts.onResync) {
+                    opts.onResync(list.items || []);
+                }
+
+                if (!opts.skipAddEventsOnResync) {
+                    for (const i of list.items || []) {
+                        const event: WatchEvent<O> = {type: "ADDED", object: i};
+                        handler(event);
+                    }
                 }
             });
 

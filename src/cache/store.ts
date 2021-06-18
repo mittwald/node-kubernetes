@@ -10,16 +10,19 @@ export interface Store<R extends MetadataObject> {
     store(obj: R): void;
     get(namespace: string, name: string): Promise<R|undefined>;
     pull(obj: R): void;
+    sync(objs: R[]): void;
 }
 
 export interface ObservableStore<R extends MetadataObject> extends Store<R> {
     onStoredOrUpdated(fn: (obj: R) => any): void;
     onRemoved(fn: (obj: R) => any): void;
+    onSynced(fn: (objs: R[]) => any): void;
 }
 
 export class ObservableStoreDecorator<R extends MetadataObject> implements ObservableStore<R> {
     private onStoreHandlers: Array<(obj: R) => any> = [];
     private onRemoveHandlers: Array<(obj: R) => any> = [];
+    private onSyncedHandlers: Array<(objs: R[]) => any> = [];
 
     public constructor(private inner: Store<R>) {
     }
@@ -30,6 +33,10 @@ export class ObservableStoreDecorator<R extends MetadataObject> implements Obser
 
     public onRemoved(fn: (obj: R) => any): void {
         this.onRemoveHandlers.push(fn);
+    }
+
+    public onSynced(fn: (objs: R[]) => any): void {
+        this.onSyncedHandlers.push(fn);
     }
 
     public get(namespace: string, name: string): Promise<R | undefined> {
@@ -46,6 +53,11 @@ export class ObservableStoreDecorator<R extends MetadataObject> implements Obser
         this.onStoreHandlers.forEach(fn => fn(obj));
     }
 
+    public sync(objs: R[]): void {
+        this.inner.sync(objs);
+        this.onSyncedHandlers.forEach(fn => fn(objs));
+    }
+
 }
 
 export class InMemoryStore<R extends MetadataObject> implements Store<R> {
@@ -57,6 +69,11 @@ export class InMemoryStore<R extends MetadataObject> implements Store<R> {
 
     public pull(obj: R) {
         this.objects.delete(`${obj.metadata.namespace}/${obj.metadata.name}`);
+    }
+
+    public sync(objs: R[]): void {
+        this.objects = new Map<string, R>();
+        objs.forEach(o => this.store(o));
     }
 
     public async get(namespace: string, name: string): Promise<R|undefined> {
@@ -71,6 +88,10 @@ export class CachingLookupStore<R extends MetadataObject> implements Store<R> {
     }
 
     public store(obj: R): void {
+        // no-op
+    }
+
+    public sync(objs: R[]): void {
         // no-op
     }
 

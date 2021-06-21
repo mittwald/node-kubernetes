@@ -1,0 +1,19 @@
+name: Publish to NPM
+on:
+  push:
+    tags: ['*']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: "16.x"
+      - run: npm config set '//registry.npmjs.org/:_authToken' "${{ secrets.NPM_TOKEN }}"
+      - run: yarn
+      - run: yarn compile
+      - run: npm version from-git
+      - run: cp README.md package.json dist/
+      - run: cd dist && npm publish

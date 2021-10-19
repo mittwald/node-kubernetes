@@ -14,6 +14,9 @@ jobs:
       - run: npm config set '//registry.npmjs.org/:_authToken' "${{ secrets.NPM_TOKEN }}"
       - run: yarn
       - run: yarn compile
+      - run: git config --global -l
+      - run: git config --global user.email m.helmich@mittwald.de
+      - run: git config --global user.name Martin Helmich
       - run: npm version from-git
       - run: cp README.md package.json dist/
       - run: cd dist && npm publish

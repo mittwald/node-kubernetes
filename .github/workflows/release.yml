@@ -14,7 +14,6 @@ jobs:
       - run: npm config set '//registry.npmjs.org/:_authToken' "${{ secrets.NPM_TOKEN }}"
       - run: yarn
       - run: yarn compile
-      - run: git config --global -l
       - run: git config --global user.email opensource@mittwald.de
       - run: git config --global user.name Mittwald Release Bot
       - run: npm version from-git

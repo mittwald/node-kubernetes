@@ -15,8 +15,8 @@ jobs:
       - run: yarn
       - run: yarn compile
       - run: git config --global -l
-      - run: git config --global user.email m.helmich@mittwald.de
-      - run: git config --global user.name Martin Helmich
+      - run: git config --global user.email opensource@mittwald.de
+      - run: git config --global user.name Mittwald Release Bot
       - run: npm version from-git
       - run: cp README.md package.json dist/
       - run: cd dist && npm publish

@@ -156,7 +156,7 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
         debug(`executing WATCH request on ${absoluteURL} (starting revision ${lastVersion})`);
 
         return new Promise<WatchResult>((res, rej) => {
-            const req = request(opts, (err, response, bodyString) => {
+            const req = request(opts, async (err, response, bodyString) => {
                 if (err) {
                     rej(err);
                     return;
@@ -200,7 +200,7 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
                                     debug(`watch: emitting missed ${parsedLine.type} event for ${parsedLine.object.metadata.name}`);
 
                                     lastVersion = resourceVersion;
-                                    onUpdate(parsedLine);
+                                    await onUpdate(parsedLine);
                                 }
                             }
                         } catch (err) {
@@ -225,7 +225,7 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
 
             let buffer = "";
 
-            req.on("data", chunk => {
+            req.on("data", async chunk => {
                 if (chunk instanceof Buffer) {
                     chunk = chunk.toString("utf-8");
                 }
@@ -242,7 +242,7 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
                         debug(`watch: emitting ${obj.type} event for ${obj.object.metadata.name}`);
 
                         lastVersion = resourceVersion;
-                        onUpdate(obj);
+                        await onUpdate(obj);
                     }
                 } catch (err) {
                     onError(err);

@@ -190,17 +190,17 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
 
         const {resyncAfterIterations = 10} = opts;
         const resync = () => this.client.get(this.baseURL, opts)
-            .then((list: ResourceList<O>) => {
+            .then(async (list: ResourceList<O>) => {
                 resourceVersion = parseInt(list.metadata.resourceVersion, 10);
 
                 if (opts.onResync) {
-                    opts.onResync(list.items || []);
+                    await opts.onResync(list.items || []);
                 }
 
                 if (!opts.skipAddEventsOnResync) {
                     for (const i of list.items || []) {
                         const event: WatchEvent<O> = {type: "ADDED", object: i};
-                        handler(event);
+                        await handler(event);
                     }
                 }
             });
@@ -238,7 +238,7 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
                     ResourceClient.watchResyncErrorCount.inc({baseURL: this.baseURL});
 
                     if (opts.onError) {
-                        opts.onError(err);
+                        await opts.onError(err);
                     }
 
                     if (opts.abortAfterErrorCount && errorCount > opts.abortAfterErrorCount) {

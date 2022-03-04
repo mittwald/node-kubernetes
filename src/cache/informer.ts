@@ -26,27 +26,27 @@ export class Informer<R extends MetadataObject, O extends R = R> {
     }
 
     public start(): Controller {
-        const handler = (event: WatchEvent<O>) => {
+        const handler = async (event: WatchEvent<O>) => {
             const {type, object} = event;
 
             switch (type) {
                 case "ADDED":
                 case "MODIFIED":
                     debug("added or updated object %o: %o", (object as any).kind, `${object.metadata.namespace}/${object.metadata.name}`);
-                    this.store.store(object);
+                    await this.store.store(object);
                     break;
                 case "DELETED":
                     debug("removed object %o: %s", (object as any).kind, `${object.metadata.namespace}/${object.metadata.name}`);
-                    this.store.pull(object);
+                    await this.store.pull(object);
                     break;
             }
         };
 
         const opts: ListWatchOptions<O> = {
             skipAddEventsOnResync: true,
-            onResync: (objs) => {
+            onResync: async (objs) => {
                 debug("resynced %d objects", objs.length);
-                this.store.sync(objs);
+                await this.store.sync(objs);
             },
             ...this.opts,
         }

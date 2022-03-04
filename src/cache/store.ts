@@ -7,10 +7,10 @@ interface CacheEntry<R extends MetadataObject> {
 }
 
 export interface Store<R extends MetadataObject> {
-    store(obj: R): void;
+    store(obj: R): Promise<void>;
     get(namespace: string, name: string): Promise<R|undefined>;
-    pull(obj: R): void;
-    sync(objs: R[]): void;
+    pull(obj: R): Promise<void>;
+    sync(objs: R[]): Promise<void>;
 }
 
 export interface ObservableStore<R extends MetadataObject> extends Store<R> {
@@ -43,19 +43,19 @@ export class ObservableStoreDecorator<R extends MetadataObject> implements Obser
         return this.inner.get(namespace, name);
     }
 
-    public pull(obj: R): void {
-        this.inner.pull(obj);
-        this.onRemoveHandlers.forEach(fn => fn(obj));
+    public async pull(obj: R): Promise<void> {
+        await this.inner.pull(obj);
+        await Promise.all(this.onRemoveHandlers.map(h => h(obj)))
     }
 
-    public store(obj: R): void {
-        this.inner.store(obj);
-        this.onStoreHandlers.forEach(fn => fn(obj));
+    public async store(obj: R): Promise<void> {
+        await this.inner.store(obj);
+        await Promise.all(this.onStoreHandlers.map(h => h(obj)))
     }
 
-    public sync(objs: R[]): void {
-        this.inner.sync(objs);
-        this.onSyncedHandlers.forEach(fn => fn(objs));
+    public async sync(objs: R[]): Promise<void> {
+        await this.inner.sync(objs);
+        await Promise.all(this.onSyncedHandlers.map(h => h(objs)))
     }
 
 }
@@ -63,17 +63,17 @@ export class ObservableStoreDecorator<R extends MetadataObject> implements Obser
 export class InMemoryStore<R extends MetadataObject> implements Store<R> {
     private objects = new Map<string, R>();
 
-    public store(obj: R) {
+    public async store(obj: R) {
         this.objects.set(`${obj.metadata.namespace}/${obj.metadata.name}`, obj);
     }
 
-    public pull(obj: R) {
+    public async pull(obj: R) {
         this.objects.delete(`${obj.metadata.namespace}/${obj.metadata.name}`);
     }
 
-    public sync(objs: R[]): void {
+    public async sync(objs: R[]) {
         this.objects = new Map<string, R>();
-        objs.forEach(o => this.store(o));
+        await Promise.all(objs.map(o => this.store(o)))
     }
 
     public async get(namespace: string, name: string): Promise<R|undefined> {
@@ -87,11 +87,11 @@ export class CachingLookupStore<R extends MetadataObject> implements Store<R> {
     public constructor(private api: INamespacedResourceClient<R, any, any>) {
     }
 
-    public store(obj: R): void {
+    public async store(obj: R) {
         // no-op
     }
 
-    public sync(objs: R[]): void {
+    public async sync(objs: R[]) {
         // no-op
     }
 
@@ -120,7 +120,7 @@ export class CachingLookupStore<R extends MetadataObject> implements Store<R> {
         return result;
     }
 
-    public pull(obj: R): void {
+    public async pull(obj: R) {
         // no-op
     }
 

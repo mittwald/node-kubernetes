@@ -9,7 +9,8 @@
     "strictNullChecks": true,
     "target": "es6",
     "outDir": "dist",
-    "lib": ["es6"]
+    "lib": ["es6"],
+    "esModuleInterop": true
   },
   "target": "es6"
 }

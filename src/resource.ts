@@ -18,6 +18,11 @@ const debug = require("debug")("kubernetes:resource");
 
 const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
 
+export interface ListWatchOptions<R extends MetadataObject> extends WatchOptions {
+    onResync?: (objs: R[]) => any;
+    skipAddEventsOnResync?: boolean;
+}
+
 export interface IResourceClient<R extends MetadataObject, K, V, O extends R = R> {
     list(listOptions?: ListOptions): Promise<Array<APIObject<K, V> & O>>;
 
@@ -41,7 +46,7 @@ export interface IResourceClient<R extends MetadataObject, K, V, O extends R = R
 
     watch(handler: (event: WatchEvent<O>) => any, errorHandler?: (error: any) => any, opts?: WatchOptions): Promise<WatchResult>;
 
-    listWatch(handler: (event: WatchEvent<O>) => any, errorHandler?: (error: any) => any, opts?: WatchOptions): WatchHandle;
+    listWatch(handler: (event: WatchEvent<O>) => any, errorHandler?: (error: any) => any, opts?: ListWatchOptions<O>): WatchHandle;
 }
 
 export interface INamespacedResourceClient<R extends MetadataObject, K, V, O extends R = R> extends IResourceClient<R, K, V, O> {
@@ -88,7 +93,7 @@ export class CustomResourceClient<R extends MetadataObject, K, V, O extends R = 
         return this.inner.watch(handler, errorHandler, opts);
     }
 
-    public listWatch(handler: (event: WatchEvent<O>) => any, errorHandler?: (error: any) => any, opts?: WatchOptions): WatchHandle {
+    public listWatch(handler: (event: WatchEvent<O>) => any, errorHandler?: (error: any) => any, opts?: ListWatchOptions<O>): WatchHandle {
         return this.inner.listWatch(handler, errorHandler, opts);
     }
 
@@ -113,9 +118,12 @@ export class CustomResourceClient<R extends MetadataObject, K, V, O extends R = 
     }
 }
 
+const resourceMetricLabels = ["baseURL"];
+type ResourceMetricLabels = typeof resourceMetricLabels[0];
+
 export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> implements IResourceClient<R, K, V, O> {
-    private static watchResyncErrorCount: Counter;
-    private static watchOpenCount: Gauge;
+    private static watchResyncErrorCount: Counter<ResourceMetricLabels>;
+    private static watchOpenCount: Gauge<ResourceMetricLabels>;
 
     protected baseURL: string;
 
@@ -137,7 +145,7 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
                 name: "kubernetes_listwatch_resync_errors",
                 help: "Amount of resync errors while running listwatches",
                 registers: [registry],
-                labelNames: ["baseURL"],
+                labelNames: resourceMetricLabels,
             });
         }
 
@@ -146,7 +154,7 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
                 name: "kubernetes_listwatch_open",
                 help: "Amount of currently open listwatches",
                 registers: [registry],
-                labelNames: ["baseURL"],
+                labelNames: resourceMetricLabels,
             });
         }
     }
@@ -173,20 +181,27 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
         return this.client.watch(this.baseURL, handler, errorHandler, opts);
     }
 
-    public listWatch(handler: (event: WatchEvent<O>) => any, errorHandler?: (error: any) => any, opts: WatchOptions = {}): WatchHandle {
+    public listWatch(handler: (event: WatchEvent<O>) => any, errorHandler?: (error: any) => any, opts: ListWatchOptions<O> = {}): WatchHandle {
         let resourceVersion = 0;
         let running = true;
 
         ResourceClient.watchOpenCount.inc({baseURL: this.baseURL});
         debug("starting list-watch on %o", this.resourceBaseURL);
 
+        const {resyncAfterIterations = 10} = opts;
         const resync = () => this.client.get(this.baseURL, opts)
-            .then((list: ResourceList<O>) => {
+            .then(async (list: ResourceList<O>) => {
                 resourceVersion = parseInt(list.metadata.resourceVersion, 10);
 
-                for (const i of list.items || []) {
-                    const event: WatchEvent<O> = {type: "ADDED", object: i};
-                    handler(event);
+                if (opts.onResync) {
+                    await opts.onResync(list.items || []);
+                }
+
+                if (!opts.skipAddEventsOnResync) {
+                    for (const i of list.items || []) {
+                        const event: WatchEvent<O> = {type: "ADDED", object: i};
+                        await handler(event);
+                    }
                 }
             });
 
@@ -195,21 +210,35 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
         const done = initialized.then(async () => {
             errorHandler = errorHandler || (() => {});
             let errorCount = 0;
+            let successCount = 0;
 
             debug("initial list for list-watch on %o completed", this.resourceBaseURL);
 
             while (running) {
                 try {
+                    if (successCount > resyncAfterIterations) {
+                        debug(`resyncing after ${resyncAfterIterations} successful WATCH iterations`);
+                        await resync();
+                    }
+
                     const result = await this.client.watch(this.baseURL, handler, errorHandler, {...opts, resourceVersion});
+                    if (result.resyncRequired) {
+                        debug(`resyncing listwatch`);
+                        await resync();
+
+                        continue;
+                    }
+
                     resourceVersion = Math.max(resourceVersion, result.resourceVersion);
                     errorCount = 0;
+                    successCount ++;
                 } catch (err) {
                     errorCount++;
 
                     ResourceClient.watchResyncErrorCount.inc({baseURL: this.baseURL});
 
                     if (opts.onError) {
-                        opts.onError(err);
+                        await opts.onError(err);
                     }
 
                     if (opts.abortAfterErrorCount && errorCount > opts.abortAfterErrorCount) {

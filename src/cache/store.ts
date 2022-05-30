@@ -84,15 +84,33 @@ export class InMemoryStore<R extends MetadataObject> implements Store<R> {
 export class CachingLookupStore<R extends MetadataObject> implements Store<R> {
     private cache = new Map<string, CacheEntry<R>>();
 
-    public constructor(private api: INamespacedResourceClient<R, any, any>) {
+    public constructor(private api: INamespacedResourceClient<R, any, any>, private expirationSeconds: number = 3600) {
     }
 
-    public async store(obj: R) {
-        // no-op
+    private storeInMap(obj: R, map: Map<string, CacheEntry<R>>): void {
+        const {namespace, name} = obj.metadata;
+        const key = `${namespace}/${name}`;
+        const exp = new Date();
+        exp.setSeconds(exp.getSeconds() + this.expirationSeconds);
+
+        map.set(key, {
+            entry: obj,
+            until: exp,
+        });
+    }
+
+    public async store(obj: R): Promise<void> {
+        this.storeInMap(obj, this.cache);
     }
 
     public async sync(objs: R[]) {
-        // no-op
+        const newCache = new Map<string, CacheEntry<R>>();
+
+        for (const obj of objs) {
+            this.storeInMap(obj, newCache);
+        }
+
+        this.cache = newCache;
     }
 
     public async get(namespace: string, name: string): Promise<R | undefined> {
@@ -108,20 +126,17 @@ export class CachingLookupStore<R extends MetadataObject> implements Store<R> {
         const result = await this.api.namespace(namespace).get(name);
 
         if (result) {
-            const exp = new Date();
-            exp.setSeconds(exp.getSeconds() + 3600);
-
-            this.cache.set(key, {
-                entry: result,
-                until: exp,
-            });
+            this.store(result);
         }
 
         return result;
     }
 
-    public async pull(obj: R) {
-        // no-op
+    public async pull(obj: R): Promise<void> {
+        const {namespace, name} = obj.metadata;
+        const key = `${namespace}/${name}`;
+
+        this.cache.delete(key);
     }
 
 }

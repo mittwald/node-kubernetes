@@ -14,19 +14,24 @@ export interface Controller {
     stop(): void;
 }
 
-export class Informer<R extends MetadataObject, O extends R = R> {
-    public readonly store: ObservableStore<O>;
+export class Informer<TResource extends MetadataObject, TResourceOutput extends TResource = TResource> {
+    private readonly resource: IResourceClient<TResource, any, any, TResourceOutput>;
+    private readonly opts?: SelectorOptions;
+
+    public readonly store: ObservableStore<TResourceOutput>;
 
     public constructor(
-        private resource: IResourceClient<R, any, any, O>,
-        private opts?: SelectorOptions,
-        store?: Store<O>,
+        resource: IResourceClient<TResource, any, any, TResourceOutput>,
+        opts?: SelectorOptions,
+        store?: Store<TResourceOutput>,
     ) {
+        this.resource = resource;
+        this.opts = opts;
         this.store = new ObservableStoreDecorator(store || new InMemoryStore());
     }
 
     public start(): Controller {
-        const handler = async (event: WatchEvent<O>) => {
+        const handler = async (event: WatchEvent<TResourceOutput>) => {
             const {type, object} = event;
 
             switch (type) {
@@ -42,7 +47,7 @@ export class Informer<R extends MetadataObject, O extends R = R> {
             }
         };
 
-        const opts: ListWatchOptions<O> = {
+        const opts: ListWatchOptions<TResourceOutput> = {
             skipAddEventsOnResync: true,
             onResync: async (objs) => {
                 debug("resynced %d objects", objs.length);

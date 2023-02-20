@@ -56,6 +56,9 @@ export class KubernetesAPI implements IKubernetesAPI {
             v1beta1: () => ({
                 customResourceDefinitions: () => this.c("/apis/apiextensions.k8s.io/v1", "/customresourcedefinitions"),
             }),
+            v1: () => ({
+                customResourceDefinitions: () => this.c("/apis/apiextensions.k8s.io/v1", "/customresourcedefinitions"),
+            }),
         };
     }
 

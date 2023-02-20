@@ -18,7 +18,7 @@ export interface CustomResourceConversion {
 }
 
 export type CustomResourceDefinitionSpec = {
-    conversion: CustomResourceConversion;
+    conversion?: CustomResourceConversion;
     group: string;
     names: CustomResourceDefinitionNames;
     scope?: "Namespaced" | "Cluster";
@@ -80,12 +80,12 @@ export interface CustomResourceValidation {
 }
 
 export interface CustomResourceDefinitionVersion {
-    additionalPrinterColumns: CustomResourceColumnDefinition[];
+    additionalPrinterColumns?: CustomResourceColumnDefinition[];
     deprecated?: boolean;
     deprecationWarning?: string;
     name: string;
     schema: CustomResourceValidation;
     served: boolean;
     storage: boolean;
-    subresources: CustomResourceSubresources
+    subresources?: CustomResourceSubresources
 }

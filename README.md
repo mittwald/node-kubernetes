@@ -144,5 +144,5 @@ new issue or pull request to add support for additional API objects.
 
 ## References
 
-- https://kubernetes.io/docs/api-reference/v1.9
-- https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md
+- https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.22/
+- https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md

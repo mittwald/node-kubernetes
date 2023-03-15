@@ -1,5 +1,5 @@
 import * as apiextv1b1 from "../types/apiextensions/v1beta1";
-import * as apiextv1 from "../types/apiextensions/v1beta1";
+import * as apiextv1 from "../types/apiextensions/v1";
 import {IResourceClient} from "../resource";
 
 export interface APIExtensionsV1beta1API {

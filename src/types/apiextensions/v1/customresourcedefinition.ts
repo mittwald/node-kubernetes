@@ -3,35 +3,39 @@ import {Schema} from "jsonschema";
 import {WebhookClientConfig} from "../../admissionregistration/v1";
 
 export interface CustomResourceDefinition {
+    description?: string
+    kind?: string;
     metadata: ObjectMeta;
     spec: CustomResourceDefinitionSpec;
+    status?: string;
 }
 
 export interface WebhookConversion {
-    clientConfig: WebhookClientConfig;
+    clientConfig?: WebhookClientConfig;
     conversionReviewVersions: string[];
 }
 
 export interface CustomResourceConversion {
     strategy: "None" | "Webhook";
-    webhook: WebhookConversion;
+    webhook?: WebhookConversion;
 }
 
 export type CustomResourceDefinitionSpec = {
     conversion?: CustomResourceConversion;
     group: string;
     names: CustomResourceDefinitionNames;
-    scope?: "Namespaced" | "Cluster";
+    preserveUnknownFields?: boolean;
+    scope: "Namespaced" | "Cluster";
     versions: CustomResourceDefinitionVersion[];
 }
 
 export interface CustomResourceColumnDefinition {
-    JSONPath: string;
     description?: string;
     format?: string;
+    jsonPath: string;
     name: string;
     priority?: number;
-    type?: any;
+    type: string;
 }
 
 export interface CustomResourceDefinitionNames {
@@ -84,7 +88,7 @@ export interface CustomResourceDefinitionVersion {
     deprecated?: boolean;
     deprecationWarning?: string;
     name: string;
-    schema: CustomResourceValidation;
+    schema?: CustomResourceValidation;
     served: boolean;
     storage: boolean;
     subresources?: CustomResourceSubresources

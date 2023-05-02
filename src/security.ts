@@ -1,4 +1,8 @@
 export function redactResponseBodyForLogging(body: any): any {
+    if (typeof body !== "object") {
+        return body;
+    }
+
     if ("kind" in body && body.kind === "Secret") {
         const out = structuredClone(body);
 

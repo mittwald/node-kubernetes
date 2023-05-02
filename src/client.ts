@@ -3,6 +3,7 @@ import {IKubernetesClientConfig} from "./config";
 import {Selector, selectorToQueryString} from "./label";
 import {isStatus, MetadataObject} from "./types/meta";
 import {DeleteOptions, WatchEvent} from "./types/meta/v1";
+import {redactResponseBodyForLogging} from "./security";
 
 const debug = require("debug")("kubernetes:client");
 
@@ -90,7 +91,7 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
                     return;
                 }
 
-                debug(`${method} request on ${opts.url} succeeded with status ${response.statusCode}: ${responseBody}`);
+                debug(`${method} request on ${opts.url} succeeded with status ${response.statusCode}: ${redactResponseBodyForLogging(responseBody)}`);
                 res(responseBody);
             });
         });

@@ -51,6 +51,9 @@
         "tsConfig": "tsconfig.base.json"
       }
     },
+    "moduleNameMapper": {
+      "axios": "axios/dist/node/axios.cjs"
+    },
     "testEnvironment": "node",
     "transform": {
       ".(ts|tsx)": "ts-jest"

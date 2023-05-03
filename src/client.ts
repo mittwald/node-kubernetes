@@ -73,6 +73,7 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
             method,
             url: absoluteURL,
             responseType: "json",
+            validateStatus: () => true,
         };
 
         if (body) {
@@ -92,7 +93,7 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
         const response = await axios(opts);
         const responseBody = response.data;
 
-        if (isStatus(responseBody) && responseBody.status === "Failure") {
+        if (typeof responseBody === "object" && isStatus(responseBody) && responseBody.status === "Failure") {
             throw new Error(responseBody.message);
         }
 
@@ -266,6 +267,7 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
         let opts: AxiosRequestConfig = {
             url: absoluteURL,
             params: {},
+            validateStatus: () => true,
         };
 
         if (labelSelector) {

@@ -5,6 +5,7 @@ import {AxiosRequestConfig, RawAxiosRequestHeaders} from "axios";
 import * as https from "https";
 import {AgentOptions} from "https";
 import {SecureClientSessionOptions} from "http2";
+import * as http2 from "http2";
 
 export interface IKubernetesClientConfig {
 
@@ -89,11 +90,11 @@ export class GenericClientConfig implements IKubernetesClientConfig {
         const out = {...headers};
 
         if (user.user.token) {
-            out.Authorization = "Bearer " + user.user.token;
+            out[http2.constants.HTTP2_HEADER_AUTHORIZATION] = "Bearer " + user.user.token;
         }
 
         if (user.user.username && user.user.password) {
-            out.Authorization = "Basic " + Buffer.from(user.user.username + ":" + user.user.password).toString("base64");
+            out[http2.constants.HTTP2_HEADER_AUTHORIZATION] = "Basic " + Buffer.from(user.user.username + ":" + user.user.password).toString("base64");
         }
 
         return out;

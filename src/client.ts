@@ -174,9 +174,9 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
 
         return new Promise<WatchResult>((res, rej) => {
             const requestHeaders = {
-                ":method": "GET",
-                ":path": url + "?" + qs.stringify(params),
-                "accept": "application/json",
+                [http2.constants.HTTP2_HEADER_METHOD]: "GET",
+                [http2.constants.HTTP2_HEADER_PATH]: url + "?" + qs.stringify(params),
+                [http2.constants.HTTP2_HEADER_ACCEPT]: "application/json",
                 ...this.config.mapHeaders({}),
             };
             const request = client.request(requestHeaders);

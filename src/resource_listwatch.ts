@@ -1,9 +1,8 @@
-import {MetadataObject, ResourceList} from "./types/meta";
+import {MetadataObject} from "./types/meta";
 import {IKubernetesRESTClient, WatchOptions} from "./client";
 import {DefaultListWatchErrorStrategy, ListWatchErrorStrategy} from "./resource_listwatch_error";
 import {WatchHandle} from "./watch";
 import {WatchEvent} from "./types/meta/v1";
-import {ResourceClient} from "./resource";
 import {Counter, Gauge} from "prom-client";
 
 const debug = require("debug")("kubernetes:resource:listwatch");

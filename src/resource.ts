@@ -8,12 +8,11 @@ import {
     WatchOptions,
     WatchResult,
 } from "./client";
-import {APIObject, MetadataObject, ResourceList} from "./types/meta";
+import {APIObject, MetadataObject} from "./types/meta";
 import {DeleteOptions, WatchEvent} from "./types/meta/v1";
 import {WatchHandle} from "./watch";
 import {Counter, Gauge, Registry} from "prom-client";
 import {JSONPatch, JSONPatchElement, RecursivePartial} from "./api_patch";
-import {DefaultListWatchErrorStrategy, ListWatchErrorStrategy} from "./resource_listwatch_error";
 import {ListWatch, ListWatchOptions} from "./resource_listwatch";
 
 const debug = require("debug")("kubernetes:resource");

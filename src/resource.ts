@@ -13,7 +13,7 @@ import {DeleteOptions, WatchEvent} from "./types/meta/v1";
 import {WatchHandle} from "./watch";
 import {Counter, Gauge, Registry} from "prom-client";
 import {JSONPatch, JSONPatchElement, RecursivePartial} from "./api_patch";
-import {DefaultListWatchErrorStrategy, ListWatchErrorStrategy} from "./resource_listwatch";
+import {DefaultListWatchErrorStrategy, ListWatchErrorStrategy} from "./resource_listwatch_error";
 
 const debug = require("debug")("kubernetes:resource");
 

@@ -22,11 +22,41 @@ export interface ListWatchMetrics {
     watchOpenCount: Gauge<"baseURL">;
 }
 
+class ListWatchState {
+    #resourceVersion: number = 0;
+
+    public running: boolean = false;
+    public errorCount: number = 0;
+    public successCount: number = 0;
+
+    public set resourceVersion(value: number|string) {
+        if (typeof value === "string") {
+            value = parseInt(value, 10);
+        }
+
+        if (value > this.#resourceVersion) {
+            this.#resourceVersion = value;
+        }
+    }
+
+    public get resourceVersion(): number {
+        return this.#resourceVersion;
+    }
+
+    public start() {
+        this.running = true;
+        this.successCount = 0;
+        this.errorCount = 0;
+    }
+
+    public markSuccess() {
+        this.successCount++;
+        this.errorCount = 0;
+    }
+}
+
 export class ListWatch<TObj extends MetadataObject> {
-    private resourceVersion: number = 0;
-    private running: boolean = false;
-    private errorCount: number = 0;
-    private successCount: number = 0;
+    private state = new ListWatchState();
 
     private readonly baseURL: string;
     private readonly resourceBaseURL: string;
@@ -59,7 +89,7 @@ export class ListWatch<TObj extends MetadataObject> {
 
     private async handler(event: WatchEvent<TObj>) {
         if (event.object.metadata.resourceVersion) {
-            this.resourceVersion = Math.max(this.resourceVersion, parseInt(event.object.metadata.resourceVersion, 10));
+            this.state.resourceVersion = event.object.metadata.resourceVersion;
         }
         await this.onWatchEvent(event);
     }
@@ -68,7 +98,7 @@ export class ListWatch<TObj extends MetadataObject> {
         const list = await this.client.get(this.baseURL, this.opts);
 
         if (list.metadata.resourceVersion) {
-            this.resourceVersion = parseInt(list.metadata.resourceVersion, 10);
+            this.state.resourceVersion = list.metadata.resourceVersion;
         }
 
         if (this.opts.onResync) {
@@ -84,8 +114,7 @@ export class ListWatch<TObj extends MetadataObject> {
     }
 
     public run(): WatchHandle {
-        this.running = true;
-        this.resourceVersion = 0;
+        this.state.start();
 
         this.metrics.watchOpenCount.inc({baseURL: this.baseURL});
 
@@ -95,25 +124,21 @@ export class ListWatch<TObj extends MetadataObject> {
         const {resyncAfterIterations = 10} = this.opts;
 
         const done = initialized.then(async () => {
-            this.errorCount = 0;
-            this.successCount = 1;
+            this.state.markSuccess();
 
-            const onEstablished = () => {
-                this.errorCount = 0;
-                this.successCount++;
-            };
+            const onEstablished = () => this.state.markSuccess();
 
             debug("initial list for list-watch on %o completed", this.resourceBaseURL);
 
-            while (this.running) {
+            while (this.state.running) {
                 try {
-                    if (this.successCount % resyncAfterIterations === 0) {
+                    if (this.state.successCount % resyncAfterIterations === 0) {
                         debug(`resyncing after ${resyncAfterIterations} successful WATCH iterations`);
                         await this.resync();
                     }
 
-                    debug("resuming watch after %o successful iterations and %o errors", this.successCount, this.errorCount);
-                    const watchOpts: WatchOptions = {...this.opts, resourceVersion: this.resourceVersion, onEstablished};
+                    debug("resuming watch after %o successful iterations and %o errors", this.state.successCount, this.state.errorCount);
+                    const watchOpts: WatchOptions = {...this.opts, resourceVersion: this.state.resourceVersion, onEstablished};
 
                     const result = await this.client.watch<TObj>(
                         this.baseURL,
@@ -129,7 +154,7 @@ export class ListWatch<TObj extends MetadataObject> {
                         continue;
                     }
 
-                    this.resourceVersion = Math.max(this.resourceVersion, result.resourceVersion);
+                    this.state.resourceVersion = result.resourceVersion;
                 } catch (err) {
                     await this.handleWatchIterationError(err);
                 }
@@ -148,8 +173,8 @@ export class ListWatch<TObj extends MetadataObject> {
     }
 
     private async handleWatchIterationError(err: unknown) {
-        this.errorCount++;
-        const reaction = this.errorStrategy(err, this.errorCount);
+        this.state.errorCount++;
+        const reaction = this.errorStrategy(err, this.state.errorCount);
 
         this.metrics.watchResyncErrorCount.inc({baseURL: this.baseURL});
 
@@ -159,7 +184,7 @@ export class ListWatch<TObj extends MetadataObject> {
             await this.opts.onError(err);
         }
 
-        if (this.opts.abortAfterErrorCount && this.errorCount > this.opts.abortAfterErrorCount) {
+        if (this.opts.abortAfterErrorCount && this.state.errorCount > this.opts.abortAfterErrorCount) {
             this.metrics.watchOpenCount.dec({baseURL: this.baseURL});
             throw new Error(`more than ${this.opts.abortAfterErrorCount} consecutive errors when watching ${this.baseURL}`);
         }

@@ -14,7 +14,7 @@ import {WatchHandle} from "./watch";
 import {Counter, Gauge, Registry} from "prom-client";
 import {JSONPatch, JSONPatchElement, RecursivePartial} from "./api_patch";
 import {DefaultListWatchErrorStrategy, ListWatchErrorStrategy} from "./resource_listwatch_error";
-import {ListWatchOptions} from "./resource_listwatch";
+import {ListWatch, ListWatchOptions} from "./resource_listwatch";
 
 const debug = require("debug")("kubernetes:resource");
 
@@ -179,114 +179,15 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
     }
 
     public listWatch(handler: (event: WatchEvent<O>) => any, errorHandler?: (error: any) => any, opts: ListWatchOptions<O> = {}): WatchHandle {
-        let resourceVersion = 0;
-        let running = true;
-
-        ResourceClient.watchOpenCount.inc({baseURL: this.baseURL});
-        debug("starting list-watch on %o", this.resourceBaseURL);
-
-        const {
-            resyncAfterIterations = 10,
-            errorStrategy = DefaultListWatchErrorStrategy,
-        } = opts;
-
-        const resync = () => this.client.get(this.baseURL, opts)
-            .then(async (list: ResourceList<O>) => {
-                resourceVersion = parseInt(list.metadata.resourceVersion, 10);
-
-                if (opts.onResync) {
-                    await opts.onResync(list.items || []);
-                }
-
-                if (!opts.skipAddEventsOnResync) {
-                    for (const i of list.items || []) {
-                        const event: WatchEvent<O> = {type: "ADDED", object: i};
-                        await handler(event);
-                    }
-                }
-            });
-
-        // Wrap the handler to keep track of the resourceVersion
-        const watchHandler = async (event: WatchEvent<O>) => {
-            if (event.object.metadata.resourceVersion) {
-                resourceVersion = Math.max(resourceVersion, parseInt(event.object.metadata.resourceVersion, 10));
-            }
-            await handler(event);
-        }
-
-        const initialized = resync();
-
-        const done = initialized.then(async () => {
-            errorHandler = errorHandler || (() => {});
-            let errorCount = 0;
-            let successCount = 1;
-
-            const onEstablished = () => {
-                errorCount = 0;
-                successCount ++;
-            };
-
-            debug("initial list for list-watch on %o completed", this.resourceBaseURL);
-
-            while (running) {
-                try {
-                    if (successCount % resyncAfterIterations === 0) {
-                        debug(`resyncing after ${resyncAfterIterations} successful WATCH iterations`);
-                        await resync();
-                    }
-
-                    debug("resuming watch after %o successful iterations and %o errors", successCount, errorCount);
-                    const watchOpts: WatchOptions = {...opts, resourceVersion, onEstablished};
-
-                    const result = await this.client.watch(this.baseURL, watchHandler, errorHandler, watchOpts);
-                    if (result.resyncRequired) {
-                        debug(`resyncing listwatch`);
-                        await resync();
-
-                        continue;
-                    }
-
-                    resourceVersion = Math.max(resourceVersion, result.resourceVersion);
-                } catch (err) {
-                    errorCount++;
-
-                    const reaction = errorStrategy(err, errorCount);
-
-                    ResourceClient.watchResyncErrorCount.inc({baseURL: this.baseURL});
-
-                    debug("encountered error while watching: %o; determined reaction: %o", err, reaction);
-
-                    if (opts.onError) {
-                        await opts.onError(err);
-                    }
-
-                    if (opts.abortAfterErrorCount && errorCount > opts.abortAfterErrorCount) {
-                        ResourceClient.watchOpenCount.dec({baseURL: this.baseURL});
-                        throw new Error(`more than ${opts.abortAfterErrorCount} consecutive errors when watching ${this.baseURL}`);
-                    }
-
-                    if (reaction.backoff) {
-                        debug("resuming watch after back-off of %o ms", reaction.backoff);
-                        await sleep(reaction.backoff);
-                    }
-
-                    if (reaction.resync) {
-                        debug("resuming watch with resync after error: %o", err);
-                        await resync();
-                    }
-                }
-            }
-
-            ResourceClient.watchOpenCount.dec({baseURL: this.baseURL});
-        });
-
-        return {
-            initialized,
-            done,
-            stop() {
-                running = false;
-            },
-        };
+        return new ListWatch(
+            handler,
+            errorHandler,
+            this.client,
+            this.baseURL,
+            this.resourceBaseURL,
+            opts,
+            {watchOpenCount: ResourceClient.watchOpenCount, watchResyncErrorCount: ResourceClient.watchResyncErrorCount},
+        ).run();
     }
 
     public async apply(resource: R): Promise<APIObject<K, V> & O> {

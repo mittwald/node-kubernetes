@@ -14,16 +14,11 @@ import {WatchHandle} from "./watch";
 import {Counter, Gauge, Registry} from "prom-client";
 import {JSONPatch, JSONPatchElement, RecursivePartial} from "./api_patch";
 import {DefaultListWatchErrorStrategy, ListWatchErrorStrategy} from "./resource_listwatch_error";
+import {ListWatchOptions} from "./resource_listwatch";
 
 const debug = require("debug")("kubernetes:resource");
 
 const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
-
-export interface ListWatchOptions<R extends MetadataObject> extends WatchOptions {
-    onResync?: (objs: R[]) => any;
-    skipAddEventsOnResync?: boolean;
-    errorStrategy?: ListWatchErrorStrategy;
-}
 
 export interface IResourceClient<R extends MetadataObject, K, V, O extends R = R> {
     list(listOptions?: ListOptions): Promise<Array<APIObject<K, V> & O>>;

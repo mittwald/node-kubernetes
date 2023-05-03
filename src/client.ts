@@ -6,6 +6,7 @@ import {redactResponseBodyForLogging} from "./security";
 import axios, {AxiosRequestConfig} from "axios";
 import * as http2 from "http2";
 import {SecureClientSessionOptions} from "http2";
+import qs from "qs";
 
 const debug = require("debug")("kubernetes:client");
 
@@ -130,102 +131,122 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
         return this.request<R>(url, body, "DELETE", opts);
     }
 
-    public watch<R extends MetadataObject = MetadataObject>(url: string,
-                                                            onUpdate: (o: WatchEvent<R>) => any,
-                                                            onError: (err: any) => any,
-                                                            watchOpts: WatchOptions = {}): Promise<WatchResult> {
+    public watch<R extends MetadataObject = MetadataObject>(
+        url: string,
+        onUpdate: (o: WatchEvent<R>) => any,
+        onError: (err: any) => any,
+        watchOpts: WatchOptions = {},
+    ): Promise<WatchResult> {
         const absoluteURL = joinURL(this.config.apiServerURL, url);
-
-        let opts: AxiosRequestConfig = {
-            url: absoluteURL,
-            params: {watch: "true"},
-            responseType: "stream",
-        };
+        const params: Record<string, string> = {watch: "true"};
 
         if (watchOpts.labelSelector) {
-            opts.params.labelSelector = selectorToQueryString(watchOpts.labelSelector);
+            params.labelSelector = selectorToQueryString(watchOpts.labelSelector);
         }
 
         if (watchOpts.fieldSelector) {
-            opts.params.fieldSelector = selectorToQueryString(watchOpts.fieldSelector);
+            params.fieldSelector = selectorToQueryString(watchOpts.fieldSelector);
         }
 
         if (watchOpts.resourceVersion) {
-            opts.params.resourceVersion = watchOpts.resourceVersion;
+            params.resourceVersion = `${watchOpts.resourceVersion}`;
         }
 
-        opts = this.config.mapAxiosOptions(opts);
-        opts.headers = {...opts.headers, "Accept": "application/json"};
+        let clientPingInterval: NodeJS.Timeout | undefined;
+
+        const clientOpts: SecureClientSessionOptions = this.config.mapNativeOptions({});
+        const client = http2.connect(this.config.apiServerURL, clientOpts, (session, socket) => {
+            debug("setting up client ping");
+            clientPingInterval = setInterval(() => {
+                session.ping((err, duration) => {
+                    debug("ping: %O", err || duration);
+                });
+            }, 15_000);
+        });
 
         let lastVersion: number = watchOpts.resourceVersion || 0;
 
         debug(`executing WATCH request on ${absoluteURL} (starting revision ${lastVersion})`);
 
         return new Promise<WatchResult>((res, rej) => {
-            axios(opts).then((response) => {
-                let body = "";
-                let buffer = "";
+            const requestHeaders = {
+                ":method": "GET",
+                ":path": url + "?" + qs.stringify(params),
+                "accept": "application/json",
+                ...this.config.mapHeaders({}),
+            };
+            const request = client.request(requestHeaders);
 
-                response.data.on("error", (err: any) => {
-                    debug(`watch: error: %O`, err);
-                    rej(err);
-                });
+            let body = "";
+            let buffer = "";
 
-                response.data.on("end", () => {
-                    debug(`%o request on %o completed with status %o`, "WATCH", opts.url, response.status);
+            request.on("error", (err: any) => {
+                debug(`watch: error: %O`, err);
+                rej(err);
+            });
 
-                    if (response.status && response.status >= 400) {
-                        if (response.status === 410) {
-                            debug(`last known resource has expired -- resync required`);
-                            res({resourceVersion: lastVersion, resyncRequired: true});
-                            return;
-                        }
+            request.on("response", (headers, flags) => {
+                const status = headers[":status"];
+                debug(`%o request on %o completed with status %o`, "WATCH", absoluteURL, status);
 
-                        rej(new Error("Unexpected status code: " + response.status));
+                if (status && status >= 400) {
+                    if (status === 410) {
+                        debug(`last known resource has expired -- resync required`);
+                        res({resourceVersion: lastVersion, resyncRequired: true});
                         return;
                     }
 
+                    rej(new Error("Unexpected status code: " + status));
+                    return;
+                }
+            });
+
+            request.on("end", () => {
+                try {
                     const parsedBody = JSON.parse(body);
+
                     if (isStatus(parsedBody) && parsedBody.status === "Failure") {
                         debug(`watch: failed with status %O`, parsedBody);
                         rej(parsedBody.message);
                         return;
                     }
+                } catch (_) {
+                    // this is fine; the request body is not guaranteed to be a single JSON document.
+                }
 
-                    res({resourceVersion: lastVersion});
-                });
+                res({resourceVersion: lastVersion});
+            });
 
-                response.data.on("data", async (chunk: Buffer | string) => {
-                    if (chunk instanceof Buffer) {
-                        chunk = chunk.toString("utf-8");
+            request.on("data", async (chunk: Buffer | string) => {
+                if (chunk instanceof Buffer) {
+                    chunk = chunk.toString("utf-8");
+                }
+
+                debug("WATCH request on %o received %d bytes of data", absoluteURL, chunk.length);
+
+                buffer += chunk;
+                body += chunk;
+
+                // Line is not yet complete; wait for next chunk.
+                if (!buffer.endsWith("\n")) {
+                    return;
+                }
+
+                try {
+                    const obj: WatchEvent<R> = JSON.parse(buffer);
+                    buffer = "";
+
+                    const resourceVersion = obj.object.metadata.resourceVersion ? parseInt(obj.object.metadata.resourceVersion, 10) : -1;
+                    if (resourceVersion > lastVersion) {
+                        debug(`watch: emitting ${obj.type} event for ${obj.object.metadata.name}`);
+
+                        lastVersion = resourceVersion;
+                        await onUpdate(obj);
                     }
-
-                    debug("WATCH request on %o received %d bytes of data", opts.url, chunk.length);
-
-                    buffer += chunk;
-                    body += chunk;
-
-                    // Line is not yet complete; wait for next chunk.
-                    if (!buffer.endsWith("\n")) {
-                        return;
-                    }
-
-                    try {
-                        const obj: WatchEvent<R> = JSON.parse(buffer);
-                        buffer = "";
-
-                        const resourceVersion = obj.object.metadata.resourceVersion ? parseInt(obj.object.metadata.resourceVersion, 10) : -1;
-                        if (resourceVersion > lastVersion) {
-                            debug(`watch: emitting ${obj.type} event for ${obj.object.metadata.name}`);
-
-                            lastVersion = resourceVersion;
-                            await onUpdate(obj);
-                        }
-                    } catch (err) {
-                        onError(err);
-                    }
-                });
-            }).catch(rej);
+                } catch (err) {
+                    onError(err);
+                }
+            });
         });
 
     }

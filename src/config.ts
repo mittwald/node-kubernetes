@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as yaml from "yamljs";
 import {Config} from "./types/config";
-import {AxiosRequestConfig} from "axios";
+import {AxiosRequestConfig, RawAxiosRequestHeaders} from "axios";
 import * as https from "https";
 import {AgentOptions} from "https";
 import {SecureClientSessionOptions} from "http2";
@@ -13,6 +13,7 @@ export interface IKubernetesClientConfig {
 
     mapAxiosOptions<T extends AxiosRequestConfig = AxiosRequestConfig>(opts: T): T;
     mapNativeOptions<T extends SecureClientSessionOptions = SecureClientSessionOptions>(opts: T): T;
+    mapHeaders(headers: Record<string, string>): Record<string, string>;
 
 }
 
@@ -81,6 +82,23 @@ export class GenericClientConfig implements IKubernetesClientConfig {
         };
     }
 
+    public mapHeaders(headers: Record<string, string>): Record<string, string> {
+        const context = this.kubeconfig.contexts.find(c => c.name === this.kubeconfig["current-context"])!;
+        const user = this.kubeconfig.users.find(c => c.name === context.context.user)!;
+
+        const out = {...headers};
+
+        if (user.user.token) {
+            out.Authorization = "Bearer " + user.user.token;
+        }
+
+        if (user.user.username && user.user.password) {
+            out.Authorization = "Basic " + Buffer.from(user.user.username + ":" + user.user.password).toString("base64");
+        }
+
+        return out;
+    }
+
     public mapAxiosOptions<T extends AxiosRequestConfig = AxiosRequestConfig>(opts: T): T {
         const context = this.kubeconfig.contexts.find(c => c.name === this.kubeconfig["current-context"])!;
         const user = this.kubeconfig.users.find(c => c.name === context.context.user)!;
@@ -95,6 +113,11 @@ export class GenericClientConfig implements IKubernetesClientConfig {
 
         if (user.user.username && user.user.password) {
             opts.auth = {username: user.user.username, password: user.user.password};
+        }
+
+        const headers = this.mapHeaders({});
+        for (const key of Object.keys(headers)) {
+            opts.headers[key] = headers[key];
         }
 
         opts.httpsAgent = new https.Agent(this.getHTTPSAgentOptions());

@@ -13,6 +13,7 @@ import {DeleteOptions, WatchEvent} from "./types/meta/v1";
 import {WatchHandle} from "./watch";
 import {Counter, Gauge, Registry} from "prom-client";
 import {JSONPatch, JSONPatchElement, RecursivePartial} from "./api_patch";
+import {DefaultListWatchErrorStrategy, ListWatchErrorStrategy} from "./resource_listwatch";
 
 const debug = require("debug")("kubernetes:resource");
 
@@ -21,6 +22,7 @@ const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
 export interface ListWatchOptions<R extends MetadataObject> extends WatchOptions {
     onResync?: (objs: R[]) => any;
     skipAddEventsOnResync?: boolean;
+    errorStrategy?: ListWatchErrorStrategy;
 }
 
 export interface IResourceClient<R extends MetadataObject, K, V, O extends R = R> {
@@ -188,7 +190,11 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
         ResourceClient.watchOpenCount.inc({baseURL: this.baseURL});
         debug("starting list-watch on %o", this.resourceBaseURL);
 
-        const {resyncAfterIterations = 10} = opts;
+        const {
+            resyncAfterIterations = 10,
+            errorStrategy = DefaultListWatchErrorStrategy,
+        } = opts;
+
         const resync = () => this.client.get(this.baseURL, opts)
             .then(async (list: ResourceList<O>) => {
                 resourceVersion = parseInt(list.metadata.resourceVersion, 10);
@@ -205,23 +211,39 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
                 }
             });
 
+        // Wrap the handler to keep track of the resourceVersion
+        const watchHandler = async (event: WatchEvent<O>) => {
+            if (event.object.metadata.resourceVersion) {
+                resourceVersion = Math.max(resourceVersion, parseInt(event.object.metadata.resourceVersion, 10));
+            }
+            await handler(event);
+        }
+
         const initialized = resync();
 
         const done = initialized.then(async () => {
             errorHandler = errorHandler || (() => {});
             let errorCount = 0;
-            let successCount = 0;
+            let successCount = 1;
+
+            const onEstablished = () => {
+                errorCount = 0;
+                successCount ++;
+            };
 
             debug("initial list for list-watch on %o completed", this.resourceBaseURL);
 
             while (running) {
                 try {
-                    if (successCount > resyncAfterIterations) {
+                    if (successCount % resyncAfterIterations === 0) {
                         debug(`resyncing after ${resyncAfterIterations} successful WATCH iterations`);
                         await resync();
                     }
 
-                    const result = await this.client.watch(this.baseURL, handler, errorHandler, {...opts, resourceVersion});
+                    debug("resuming watch after %o successful iterations and %o errors", successCount, errorCount);
+                    const watchOpts: WatchOptions = {...opts, resourceVersion, onEstablished};
+
+                    const result = await this.client.watch(this.baseURL, watchHandler, errorHandler, watchOpts);
                     if (result.resyncRequired) {
                         debug(`resyncing listwatch`);
                         await resync();
@@ -230,12 +252,14 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
                     }
 
                     resourceVersion = Math.max(resourceVersion, result.resourceVersion);
-                    errorCount = 0;
-                    successCount ++;
                 } catch (err) {
                     errorCount++;
 
+                    const reaction = errorStrategy(err, errorCount);
+
                     ResourceClient.watchResyncErrorCount.inc({baseURL: this.baseURL});
+
+                    debug("encountered error while watching: %o; determined reaction: %o", err, reaction);
 
                     if (opts.onError) {
                         await opts.onError(err);
@@ -246,11 +270,15 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
                         throw new Error(`more than ${opts.abortAfterErrorCount} consecutive errors when watching ${this.baseURL}`);
                     }
 
-                    debug("resuming watch after back-off of %o ms", 10000);
-                    await sleep(10000);
+                    if (reaction.backoff) {
+                        debug("resuming watch after back-off of %o ms", reaction.backoff);
+                        await sleep(reaction.backoff);
+                    }
 
-                    debug("resuming watch with resync after error: %o", err);
-                    await resync();
+                    if (reaction.resync) {
+                        debug("resuming watch with resync after error: %o", err);
+                        await resync();
+                    }
                 }
             }
 

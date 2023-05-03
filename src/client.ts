@@ -152,7 +152,7 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
         }
 
         opts = this.config.mapRequestOptions(opts);
-        opts.headers = {...opts.headers, "Connection": "keep-alive", "Accept": "application/json"};
+        opts.headers = {...opts.headers, "Accept": "application/json"};
 
         let lastVersion: number = watchOpts.resourceVersion || 0;
 
@@ -229,6 +229,10 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
             });
 
             let buffer = "";
+
+            req.on("socket", socket => {
+                socket.setKeepAlive(true, 15 * 1000);
+            });
 
             req.on("request", r => {
                 debug("sending WATCH request on %o: %o", opts.url, r.getHeaders());

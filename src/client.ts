@@ -27,6 +27,7 @@ export type WatchOptions = SelectorOptions & {
     resyncAfterIterations?: number;
     onError?: (err: any) => void;
     onEstablished?: () => void;
+    pingIntervalSeconds?: number;
 };
 
 export type ListOptions = SelectorOptions;
@@ -139,6 +140,7 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
     ): Promise<WatchResult> {
         const absoluteURL = joinURL(this.config.apiServerURL, url);
         const params: Record<string, string> = {watch: "true"};
+        const {pingIntervalSeconds = 15} = watchOpts;
 
         if (watchOpts.labelSelector) {
             params.labelSelector = selectorToQueryString(watchOpts.labelSelector);
@@ -156,12 +158,14 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
 
         const clientOpts: SecureClientSessionOptions = this.config.mapNativeOptions({});
         const client = http2.connect(this.config.apiServerURL, clientOpts, (session, socket) => {
-            debug("setting up client ping");
             clientPingInterval = setInterval(() => {
                 session.ping((err, duration) => {
-                    debug("ping: %O", err || duration);
+                    if (err) {
+                        debug("error on HTTP/2 client ping: %O", err);
+                        session.destroy(err);
+                    }
                 });
-            }, 15_000);
+            }, pingIntervalSeconds * 1000);
         });
 
         let lastVersion: number = watchOpts.resourceVersion || 0;
@@ -202,6 +206,10 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
             });
 
             request.on("end", () => {
+                if (clientPingInterval) {
+                    clearInterval(clientPingInterval);
+                }
+
                 try {
                     const parsedBody = JSON.parse(body);
 

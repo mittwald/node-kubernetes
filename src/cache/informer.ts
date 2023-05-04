@@ -1,8 +1,9 @@
 import {InMemoryStore, ObservableStore, ObservableStoreDecorator, Store} from "./store";
 import {MetadataObject} from "../types/meta";
-import {IResourceClient, ListWatchOptions} from "../resource";
+import {IResourceClient} from "../resource";
 import {WatchEvent} from "../types/meta/v1";
 import {SelectorOptions} from "../client";
+import {ListWatchOptions} from "../resource_listwatch";
 
 const debug = require("debug")("kubernetes:informer");
 

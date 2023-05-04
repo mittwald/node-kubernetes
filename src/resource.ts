@@ -8,20 +8,16 @@ import {
     WatchOptions,
     WatchResult,
 } from "./client";
-import {APIObject, MetadataObject, ResourceList} from "./types/meta";
+import {APIObject, MetadataObject} from "./types/meta";
 import {DeleteOptions, WatchEvent} from "./types/meta/v1";
 import {WatchHandle} from "./watch";
 import {Counter, Gauge, Registry} from "prom-client";
 import {JSONPatch, JSONPatchElement, RecursivePartial} from "./api_patch";
+import {ListWatch, ListWatchOptions} from "./resource_listwatch";
 
 const debug = require("debug")("kubernetes:resource");
 
 const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
-
-export interface ListWatchOptions<R extends MetadataObject> extends WatchOptions {
-    onResync?: (objs: R[]) => any;
-    skipAddEventsOnResync?: boolean;
-}
 
 export interface IResourceClient<R extends MetadataObject, K, V, O extends R = R> {
     list(listOptions?: ListOptions): Promise<Array<APIObject<K, V> & O>>;
@@ -182,88 +178,15 @@ export class ResourceClient<R extends MetadataObject, K, V, O extends R = R> imp
     }
 
     public listWatch(handler: (event: WatchEvent<O>) => any, errorHandler?: (error: any) => any, opts: ListWatchOptions<O> = {}): WatchHandle {
-        let resourceVersion = 0;
-        let running = true;
-
-        ResourceClient.watchOpenCount.inc({baseURL: this.baseURL});
-        debug("starting list-watch on %o", this.resourceBaseURL);
-
-        const {resyncAfterIterations = 10} = opts;
-        const resync = () => this.client.get(this.baseURL, opts)
-            .then(async (list: ResourceList<O>) => {
-                resourceVersion = parseInt(list.metadata.resourceVersion, 10);
-
-                if (opts.onResync) {
-                    await opts.onResync(list.items || []);
-                }
-
-                if (!opts.skipAddEventsOnResync) {
-                    for (const i of list.items || []) {
-                        const event: WatchEvent<O> = {type: "ADDED", object: i};
-                        await handler(event);
-                    }
-                }
-            });
-
-        const initialized = resync();
-
-        const done = initialized.then(async () => {
-            errorHandler = errorHandler || (() => {});
-            let errorCount = 0;
-            let successCount = 0;
-
-            debug("initial list for list-watch on %o completed", this.resourceBaseURL);
-
-            while (running) {
-                try {
-                    if (successCount > resyncAfterIterations) {
-                        debug(`resyncing after ${resyncAfterIterations} successful WATCH iterations`);
-                        await resync();
-                    }
-
-                    const result = await this.client.watch(this.baseURL, handler, errorHandler, {...opts, resourceVersion});
-                    if (result.resyncRequired) {
-                        debug(`resyncing listwatch`);
-                        await resync();
-
-                        continue;
-                    }
-
-                    resourceVersion = Math.max(resourceVersion, result.resourceVersion);
-                    errorCount = 0;
-                    successCount ++;
-                } catch (err) {
-                    errorCount++;
-
-                    ResourceClient.watchResyncErrorCount.inc({baseURL: this.baseURL});
-
-                    if (opts.onError) {
-                        await opts.onError(err);
-                    }
-
-                    if (opts.abortAfterErrorCount && errorCount > opts.abortAfterErrorCount) {
-                        ResourceClient.watchOpenCount.dec({baseURL: this.baseURL});
-                        throw new Error(`more than ${opts.abortAfterErrorCount} consecutive errors when watching ${this.baseURL}`);
-                    }
-
-                    debug("resuming watch after back-off of %o ms", 10000);
-                    await sleep(10000);
-
-                    debug("resuming watch with resync after error: %o", err);
-                    await resync();
-                }
-            }
-
-            ResourceClient.watchOpenCount.dec({baseURL: this.baseURL});
-        });
-
-        return {
-            initialized,
-            done,
-            stop() {
-                running = false;
-            },
-        };
+        return new ListWatch(
+            handler,
+            errorHandler,
+            this.client,
+            this.baseURL,
+            this.resourceBaseURL,
+            opts,
+            {watchOpenCount: ResourceClient.watchOpenCount, watchResyncErrorCount: ResourceClient.watchResyncErrorCount},
+        ).run();
     }
 
     public async apply(resource: R): Promise<APIObject<K, V> & O> {

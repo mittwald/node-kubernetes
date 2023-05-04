@@ -23,6 +23,7 @@ export type WatchOptions = SelectorOptions & {
     abortAfterErrorCount?: number;
     resyncAfterIterations?: number;
     onError?: (err: any) => void;
+    onEstablished?: () => void;
 };
 
 export type ListOptions = SelectorOptions;
@@ -151,6 +152,7 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
         }
 
         opts = this.config.mapRequestOptions(opts);
+        opts.headers = {...opts.headers, "Accept": "application/json"};
 
         let lastVersion: number = watchOpts.resourceVersion || 0;
 
@@ -159,6 +161,8 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
         return new Promise<WatchResult>((res, rej) => {
             const req = request(opts, async (err, response, bodyString) => {
                 if (err) {
+                    debug(`%o request on %o failed: %O`, "WATCH", opts.url, err);
+
                     rej(err);
                     return;
                 }
@@ -225,6 +229,21 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
             });
 
             let buffer = "";
+
+            req.on("socket", socket => {
+                socket.setKeepAlive(true, 15 * 1000);
+            });
+
+            req.on("request", r => {
+                debug("sending WATCH request on %o: %o", opts.url, r.getHeaders());
+            })
+
+            req.on("response", response => {
+                debug("got response to WATCH request on %o: %o", opts.url, response.request.headers);
+                if (watchOpts.onEstablished) {
+                    watchOpts.onEstablished();
+                }
+            });
 
             req.on("data", async chunk => {
                 if (chunk instanceof Buffer) {

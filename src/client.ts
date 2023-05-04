@@ -1,13 +1,16 @@
-import request from "request";
 import {IKubernetesClientConfig} from "./config";
 import {Selector, selectorToQueryString} from "./label";
 import {isStatus, MetadataObject} from "./types/meta";
 import {DeleteOptions, WatchEvent} from "./types/meta/v1";
 import {redactResponseBodyForLogging} from "./security";
+import axios, {AxiosRequestConfig} from "axios";
+import * as http2 from "http2";
+import {SecureClientSessionOptions} from "http2";
+import qs from "qs";
 
 const debug = require("debug")("kubernetes:client");
 
-export type RequestMethod = "GET"|"POST"|"PUT"|"PATCH"|"DELETE";
+export type RequestMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 export type SelectorOptions = {
     labelSelector?: Selector;
@@ -15,8 +18,8 @@ export type SelectorOptions = {
 };
 
 export type MandatorySelectorOptions =
-    | {labelSelector: Selector}
-    | {fieldSelector: Selector};
+    | { labelSelector: Selector }
+    | { fieldSelector: Selector };
 
 export type WatchOptions = SelectorOptions & {
     resourceVersion?: number;
@@ -24,6 +27,7 @@ export type WatchOptions = SelectorOptions & {
     resyncAfterIterations?: number;
     onError?: (err: any) => void;
     onEstablished?: () => void;
+    pingIntervalSeconds?: number;
 };
 
 export type ListOptions = SelectorOptions;
@@ -43,10 +47,15 @@ export type PatchKind =
 
 export interface IKubernetesRESTClient {
     post<R = any>(url: string, body: any): Promise<R>;
+
     put<R = any>(url: string, body: any): Promise<R>;
+
     patch<R = any>(url: string, body: any, patchKind: PatchKind): Promise<R>;
-    delete<R = any>(url: string, opts?: DeleteOptions, queryParams?: {[k: string]: string}, body?: any): Promise<R>;
-    get<R = any>(url: string, opts?: ListOptions): Promise<R|undefined>;
+
+    delete<R = any>(url: string, opts?: DeleteOptions, queryParams?: { [k: string]: string }, body?: any): Promise<R>;
+
+    get<R = any>(url: string, opts?: ListOptions): Promise<R | undefined>;
+
     watch<R extends MetadataObject = MetadataObject>(url: string, onUpdate: (o: WatchEvent<R>) => any, onError: (err: any) => any, opts?: WatchOptions): Promise<WatchResult>;
 }
 
@@ -57,45 +66,39 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
     public constructor(private config: IKubernetesClientConfig) {
     }
 
-    private request<R = any>(url: string, body?: any, method: RequestMethod = "POST", additionalOptions: request.CoreOptions = {}): Promise<R> {
+    private async request<R = any>(url: string, body?: any, method: RequestMethod = "POST", additionalOptions: AxiosRequestConfig = {}): Promise<R> {
         const absoluteURL = joinURL(this.config.apiServerURL, url);
 
-        return new Promise((res, rej) => {
-            let opts: request.OptionsWithUrl = {
-                method,
-                url: absoluteURL,
-                json: true,
-            };
+        let opts: AxiosRequestConfig = {
+            method,
+            url: absoluteURL,
+            responseType: "json",
+            validateStatus: () => true,
+        };
 
-            if (body) {
-                opts.json = body;
-            }
+        if (body) {
+            opts.data = body;
+        }
 
-            opts = this.config.mapRequestOptions(opts);
+        opts = this.config.mapAxiosOptions(opts);
 
-            if (additionalOptions.headers) {
-                additionalOptions.headers = {...(opts.headers || {}), ...additionalOptions.headers};
-            }
+        if (additionalOptions.headers) {
+            additionalOptions.headers = {...(opts.headers || {}), ...additionalOptions.headers};
+        }
 
-            opts = {...opts, ...additionalOptions};
+        opts = {...opts, ...additionalOptions};
 
-            debug(`executing ${method} request on ${opts.url}`);
+        debug(`executing ${method} request on ${opts.url}`);
 
-            request(opts, (err, response, responseBody) => {
-                if (err) {
-                    rej(err);
-                    return;
-                }
+        const response = await axios(opts);
+        const responseBody = response.data;
 
-                if (isStatus(responseBody) && responseBody.status === "Failure") {
-                    rej(new Error(responseBody.message));
-                    return;
-                }
+        if (typeof responseBody === "object" && isStatus(responseBody) && responseBody.status === "Failure") {
+            throw new Error(responseBody.message);
+        }
 
-                debug(`${method} request on ${opts.url} succeeded with status ${response.statusCode}: ${redactResponseBodyForLogging(responseBody)}`);
-                res(responseBody);
-            });
-        });
+        debug(`${method} request on ${opts.url} succeeded with status ${response.status}: ${redactResponseBodyForLogging(responseBody)}`);
+        return responseBody;
     }
 
     public post<R = any>(url: string, body: any): Promise<R> {
@@ -107,151 +110,136 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
     }
 
     public patch<R = any>(url: string, body: any, patchKind: PatchKind): Promise<R> {
-        return this.request<R>(url, body, "PATCH", {headers: {
-            "Content-Type": patchKind,
-        }});
+        return this.request<R>(url, body, "PATCH", {
+            headers: {
+                "Content-Type": patchKind,
+            }
+        });
     }
 
-    public delete<R = any>(url: string, deleteOptions?: ListOptions, queryParams: {[k: string]: string} = {}, body?: any): Promise<R> {
-        const opts: request.CoreOptions = {};
+    public delete<R = any>(url: string, deleteOptions?: ListOptions, queryParams: { [k: string]: string } = {}, body?: any): Promise<R> {
+        const opts: AxiosRequestConfig = {};
 
-        opts.qs = queryParams;
+        opts.params = queryParams;
 
         if (deleteOptions && deleteOptions.labelSelector) {
-            opts.qs.labelSelector = selectorToQueryString(deleteOptions.labelSelector);
+            opts.params.labelSelector = selectorToQueryString(deleteOptions.labelSelector);
         }
 
         if (deleteOptions && deleteOptions.fieldSelector) {
-            opts.qs.fieldSelector = selectorToQueryString(deleteOptions.fieldSelector);
+            opts.params.fieldSelector = selectorToQueryString(deleteOptions.fieldSelector);
         }
 
         return this.request<R>(url, body, "DELETE", opts);
     }
 
-    public watch<R extends MetadataObject = MetadataObject>(url: string,
-                                                            onUpdate: (o: WatchEvent<R>) => any,
-                                                            onError: (err: any) => any,
-                                                            watchOpts: WatchOptions = {}): Promise<WatchResult> {
+    public watch<R extends MetadataObject = MetadataObject>(
+        url: string,
+        onUpdate: (o: WatchEvent<R>) => any,
+        onError: (err: any) => any,
+        watchOpts: WatchOptions = {},
+    ): Promise<WatchResult> {
         const absoluteURL = joinURL(this.config.apiServerURL, url);
-
-        let opts: request.OptionsWithUrl = {
-            url: absoluteURL,
-            qs: {watch: "true"},
-        };
+        const params: Record<string, string> = {watch: "true"};
+        const {pingIntervalSeconds = 15} = watchOpts;
 
         if (watchOpts.labelSelector) {
-            opts.qs.labelSelector = selectorToQueryString(watchOpts.labelSelector);
+            params.labelSelector = selectorToQueryString(watchOpts.labelSelector);
         }
 
         if (watchOpts.fieldSelector) {
-            opts.qs.fieldSelector = selectorToQueryString(watchOpts.fieldSelector);
+            params.fieldSelector = selectorToQueryString(watchOpts.fieldSelector);
         }
 
         if (watchOpts.resourceVersion) {
-            opts.qs.resourceVersion = watchOpts.resourceVersion;
+            params.resourceVersion = `${watchOpts.resourceVersion}`;
         }
 
-        opts = this.config.mapRequestOptions(opts);
-        opts.headers = {...opts.headers, "Accept": "application/json"};
+        let clientPingInterval: NodeJS.Timeout | undefined;
+
+        const clientOpts: SecureClientSessionOptions = this.config.mapNativeOptions({});
+        const client = http2.connect(this.config.apiServerURL, clientOpts, (session, socket) => {
+            clientPingInterval = setInterval(() => {
+                session.ping((err, duration) => {
+                    if (err) {
+                        debug("error on HTTP/2 client ping: %O", err);
+                        session.destroy(err);
+                    }
+                });
+            }, pingIntervalSeconds * 1000);
+        });
 
         let lastVersion: number = watchOpts.resourceVersion || 0;
 
         debug(`executing WATCH request on ${absoluteURL} (starting revision ${lastVersion})`);
 
         return new Promise<WatchResult>((res, rej) => {
-            const req = request(opts, async (err, response, bodyString) => {
-                if (err) {
-                    debug(`%o request on %o failed: %O`, "WATCH", opts.url, err);
+            const requestHeaders = {
+                [http2.constants.HTTP2_HEADER_METHOD]: "GET",
+                [http2.constants.HTTP2_HEADER_PATH]: url + "?" + qs.stringify(params),
+                [http2.constants.HTTP2_HEADER_ACCEPT]: "application/json",
+                ...this.config.mapHeaders({}),
+            };
+            const request = client.request(requestHeaders);
 
-                    rej(err);
-                    return;
-                }
+            let body = "";
+            let buffer = "";
 
-                debug(`%o request on %o completed with status %o: %O`, "WATCH", opts.url, response.statusCode, bodyString);
+            request.on("error", (err: any) => {
+                debug(`watch: error: %O`, err);
+                rej(err);
+            });
 
-                if (response.statusCode && response.statusCode >= 400) {
-                    if (response.statusCode === 410) {
+            request.on("response", (headers, flags) => {
+                const status = headers[":status"];
+                debug(`%o request on %o completed with status %o`, "WATCH", absoluteURL, status);
+
+                if (status && status >= 400) {
+                    if (status === 410) {
                         debug(`last known resource has expired -- resync required`);
                         res({resourceVersion: lastVersion, resyncRequired: true});
                         return;
                     }
 
-                    rej(new Error("Unexpected status code: " + response.statusCode));
+                    rej(new Error("Unexpected status code: " + status));
                     return;
                 }
+            });
 
-                if (bodyString.length === 0) {
-                    debug(`WATCH request on ${url} returned empty response`);
-                    res({resourceVersion: lastVersion});
-                    return;
+            request.on("end", () => {
+                if (clientPingInterval) {
+                    clearInterval(clientPingInterval);
                 }
-
-                let body: any;
 
                 try {
-                    body = JSON.parse(bodyString);
-                } catch (err) {
-                    const bodyLines = bodyString.split("\n");
-                    for (const line of bodyLines) {
-                        if (line === "") {
-                            continue;
-                        }
+                    const parsedBody = JSON.parse(body);
 
-                        try {
-                            const parsedLine: WatchEvent<R> = JSON.parse(line);
-                            if (parsedLine.type === "ADDED" || parsedLine.type === "MODIFIED" || parsedLine.type === "DELETED") {
-                                const resourceVersion = parseInt(parsedLine.object.metadata.resourceVersion || "0", 10);
-                                if (resourceVersion > lastVersion) {
-                                    debug(`watch: emitting missed ${parsedLine.type} event for ${parsedLine.object.metadata.name}`);
-
-                                    lastVersion = resourceVersion;
-                                    await onUpdate(parsedLine);
-                                }
-                            }
-                        } catch (err) {
-                            debug(`watch: could not parse JSON line '${line}'`);
-
-                            rej(err);
-                            return;
-                        }
+                    if (isStatus(parsedBody) && parsedBody.status === "Failure") {
+                        debug(`watch: failed with status %O`, parsedBody);
+                        rej(parsedBody.message);
+                        return;
                     }
-                    res({resourceVersion: lastVersion});
-                    return;
-                }
-
-                if (isStatus(body) && body.status === "Failure") {
-                    debug(`watch: failed with status %O`, body);
-                    rej(body.message);
-                    return;
+                } catch (_) {
+                    // this is fine; the request body is not guaranteed to be a single JSON document.
                 }
 
                 res({resourceVersion: lastVersion});
             });
 
-            let buffer = "";
-
-            req.on("socket", socket => {
-                socket.setKeepAlive(true, 15 * 1000);
-            });
-
-            req.on("request", r => {
-                debug("sending WATCH request on %o: %o", opts.url, r.getHeaders());
-            })
-
-            req.on("response", response => {
-                debug("got response to WATCH request on %o: %o", opts.url, response.request.headers);
-                if (watchOpts.onEstablished) {
-                    watchOpts.onEstablished();
-                }
-            });
-
-            req.on("data", async chunk => {
+            request.on("data", async (chunk: Buffer | string) => {
                 if (chunk instanceof Buffer) {
                     chunk = chunk.toString("utf-8");
                 }
 
-                debug("WATCH request on %o received %d bytes of data", opts.url, chunk.length);
+                debug("WATCH request on %o received %d bytes of data", absoluteURL, chunk.length);
+
                 buffer += chunk;
+                body += chunk;
+
+                // Line is not yet complete; wait for next chunk.
+                if (!buffer.endsWith("\n")) {
+                    return;
+                }
 
                 try {
                     const obj: WatchEvent<R> = JSON.parse(buffer);
@@ -269,66 +257,51 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
                 }
             });
         });
+
     }
 
-    public get<R = any>(url: string, listOptions: ListOptions = {}): Promise<R|undefined> {
+    public async get<R = any>(url: string, listOptions: ListOptions = {}): Promise<R | undefined> {
         const absoluteURL = joinURL(this.config.apiServerURL, url);
         const {labelSelector, fieldSelector} = listOptions;
 
-        return new Promise<R|undefined>((res, rej) => {
-            let opts: request.OptionsWithUrl = {
-                url: absoluteURL,
-                qs: {},
-            };
+        let opts: AxiosRequestConfig = {
+            url: absoluteURL,
+            params: {},
+            validateStatus: () => true,
+        };
 
-            if (labelSelector) {
-                opts.qs.labelSelector = selectorToQueryString(labelSelector);
+        if (labelSelector) {
+            opts.params.labelSelector = selectorToQueryString(labelSelector);
+        }
+
+        if (fieldSelector) {
+            opts.params.fieldSelector = selectorToQueryString(fieldSelector);
+        }
+
+        opts = this.config.mapAxiosOptions(opts);
+
+        debug(`executing GET request on ${opts.url}`);
+
+        const response = await axios(opts);
+
+        if (response.status === 404) {
+            debug(`GET request on %o failed with status %o`, opts.url, response.status);
+
+            return undefined;
+        }
+
+        if (isStatus(response.data) && response.data.status === "Failure") {
+            if (response.data.code === 404) {
+                return undefined;
             }
 
-            if (fieldSelector) {
-                opts.qs.fieldSelector = selectorToQueryString(fieldSelector);
-            }
+            debug(`executing GET request on %o failed. response body: %O`, response.status, response.data);
 
-            opts = this.config.mapRequestOptions(opts);
+            throw(new Error(response.data.message));
+        }
 
-            debug(`executing GET request on ${opts.url}`);
-
-            request(opts, (err, response, body) => {
-                if (err) {
-                    rej(err);
-                    return;
-                }
-
-                if (response.statusCode === 404) {
-                    debug(`GET request on %o failed with status %o`, opts.url, response.statusCode);
-
-                    res(undefined);
-                    return;
-                }
-
-                try {
-                    body = JSON.parse(body);
-                } catch (err) {
-                    rej(err);
-                    return;
-                }
-
-                if (isStatus(body) && body.status === "Failure") {
-                    if (body.code === 404) {
-                        res(undefined);
-                        return;
-                    }
-
-                    debug(`executing GET request on %o failed. response body: %O`, response.statusCode, body);
-
-                    rej(new Error(body.message));
-                    return;
-                }
-
-                debug(`GET request on %o succeeded with status %o: %O`, opts.url, response.statusCode, body);
-                res(body);
-            });
-        });
+        debug(`GET request on %o succeeded with status %o: %O`, opts.url, response.status, response.data);
+        return response.data;
     }
 
 }

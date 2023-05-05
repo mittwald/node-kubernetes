@@ -59,6 +59,15 @@ describe("String to label selector", () => {
             }
         });
     });
+    test("can handle odd whitespaces around match expression operator", () => {
+        const selector = parseLabelSelector("scope  in   (internal,external)");
+        expect(selector).toEqual({
+            scope: {
+                operator: "in",
+                values: ["internal", "external"]
+            }
+        });
+    });
     describe("evaluates only first operator if wrong separator is used", () => {
         test(" for match expressions", () => {
             const selector = parseLabelSelector("scope in (internal,external),bar notin (foo,cafe)");

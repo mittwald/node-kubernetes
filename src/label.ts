@@ -22,7 +22,7 @@ export function selectorToString(selector: Selector, separator = ";"): string {
 
 export const selectorToQueryString = (selector: Selector) => selectorToString(selector, ",");
 
-const setBasedSelectorRegex = new RegExp("([^\(\)]*) (in|notin) \\((.*)\\)", "i");
+const setBasedSelectorRegex = new RegExp("([^\(\) ]*) +(in|notin) +\\((.*)\\)", "i");
 
 /**
  * Parse a Label Selector string to a Selector Object.

@@ -1,10 +1,10 @@
-import {ResourceList} from "../../meta";
-import {ObjectMeta} from "../../meta/v1";
+import { ResourceList } from "../../meta";
+import { ObjectMeta } from "../../meta/v1";
 
 export interface ServiceSpecClusterIP {
     type?: "ClusterIP";
-    clusterIP?: ""|"None"|string;
-    selector: {[label: string]: string};
+    clusterIP?: "" | "None" | string;
+    selector: { [label: string]: string };
 }
 
 export interface ServiceSpecExternalName {
@@ -16,26 +16,31 @@ export interface ServiceSpecLoadBalancer {
     type: "LoadBalancer";
     loadBalancerIP?: string;
     loadBalancerSourceRanges?: string[];
-    selector: {[label: string]: string};
+    selector: { [label: string]: string };
 }
 
 export interface ServiceSpecNodePort {
     type: "NodePort";
-    selector: {[label: string]: string};
+    selector: { [label: string]: string };
 }
 
 export interface ServicePort {
     name?: string;
     nodePort?: number;
     port?: number;
-    protocol?: "TCP"|"UDP";
+    protocol?: "TCP" | "UDP";
     targetPort?: number;
 }
 
-export type ServiceSpec = (ServiceSpecClusterIP|ServiceSpecExternalName|ServiceSpecLoadBalancer|ServiceSpecNodePort) & {
+export type ServiceSpec = (
+    | ServiceSpecClusterIP
+    | ServiceSpecExternalName
+    | ServiceSpecLoadBalancer
+    | ServiceSpecNodePort
+) & {
     externalIPs?: string[];
     ports?: ServicePort[];
-    sessionAffinity?: "ClientIP"|"None";
+    sessionAffinity?: "ClientIP" | "None";
 };
 
 export interface Service {

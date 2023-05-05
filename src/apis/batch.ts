@@ -1,4 +1,4 @@
-import {INamespacedResourceClient} from "../resource";
+import { INamespacedResourceClient } from "../resource";
 import * as batchv1 from "../types/batch/v1";
 import * as batchv1beta1 from "../types/batch/v1beta1";
 

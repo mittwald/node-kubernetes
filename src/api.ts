@@ -1,14 +1,23 @@
-import {IKubernetesRESTClient} from "./client";
-import {INamespacedResourceClient, IResourceClient, NamespacedResourceClient, ResourceClient} from "./resource";
+import { IKubernetesRESTClient } from "./client";
+import { INamespacedResourceClient, IResourceClient, NamespacedResourceClient, ResourceClient } from "./resource";
 import * as corev1 from "./types/core/v1";
 import * as resourceAppsV1beta1 from "./apis/apps/v1beta1";
 import * as resourceExtensionsV1beta1 from "./apis/extensions/v1beta1";
 import * as admregv1 from "./types/admissionregistration/v1";
-import {APIExtensionsAPI, AppsAPI, AutoscalingAPI, BatchAPI, CoreAPI, ExtensionsAPI, PolicyAPI, RBACAPI} from "./apis";
-import {MetadataObject} from "./types/meta";
-import {register, Registry} from "prom-client";
-import {CertificatesAPI} from "./apis/certificates";
-import {AdmissionRegistrationAPI} from "./apis/admissionregistration";
+import {
+    APIExtensionsAPI,
+    AppsAPI,
+    AutoscalingAPI,
+    BatchAPI,
+    CoreAPI,
+    ExtensionsAPI,
+    PolicyAPI,
+    RBACAPI,
+} from "./apis";
+import { MetadataObject } from "./types/meta";
+import { register, Registry } from "prom-client";
+import { CertificatesAPI } from "./apis/certificates";
+import { AdmissionRegistrationAPI } from "./apis/admissionregistration";
 
 export interface IKubernetesAPI {
     extend<C>(name: string, customResourceAPI: C): this & C;
@@ -25,15 +34,22 @@ export interface IKubernetesAPI {
 }
 
 export class KubernetesAPI implements IKubernetesAPI {
+    public constructor(
+        private readonly restClient: IKubernetesRESTClient,
+        private readonly registry: Registry = register,
+    ) {}
 
-    public constructor(private restClient: IKubernetesRESTClient, private registry: Registry = register) {
-    }
-
-    private nc<R extends MetadataObject, K, V, O extends R = R>(apiBaseURL: string, resourceBaseURL: string): INamespacedResourceClient<R, K, V, O> {
+    private nc<R extends MetadataObject, K, V, O extends R = R>(
+        apiBaseURL: string,
+        resourceBaseURL: string,
+    ): INamespacedResourceClient<R, K, V, O> {
         return new NamespacedResourceClient(this.restClient, apiBaseURL, resourceBaseURL, this.registry);
     }
 
-    private c<R extends MetadataObject, K, V, O extends R = R>(apiBaseURL: string, resourceBaseURL: string): IResourceClient<R, K, V, O> {
+    private c<R extends MetadataObject, K, V, O extends R = R>(
+        apiBaseURL: string,
+        resourceBaseURL: string,
+    ): IResourceClient<R, K, V, O> {
         return new ResourceClient(this.restClient, apiBaseURL, resourceBaseURL, this.registry);
     }
 
@@ -46,7 +62,8 @@ export class KubernetesAPI implements IKubernetesAPI {
     public admissionRegistration(): AdmissionRegistrationAPI {
         return {
             v1: () => ({
-                validatingWebhookConfigurations: () => this.c(`/apis/${admregv1.apiGroup}`, "/validatingwebhookconfigurations"),
+                validatingWebhookConfigurations: () =>
+                    this.c(`/apis/${admregv1.apiGroup}`, "/validatingwebhookconfigurations"),
             }),
         };
     }
@@ -54,7 +71,8 @@ export class KubernetesAPI implements IKubernetesAPI {
     public apiextensions(): APIExtensionsAPI {
         return {
             v1beta1: () => ({
-                customResourceDefinitions: () => this.c("/apis/apiextensions.k8s.io/v1beta1", "/customresourcedefinitions"),
+                customResourceDefinitions: () =>
+                    this.c("/apis/apiextensions.k8s.io/v1beta1", "/customresourcedefinitions"),
             }),
             v1: () => ({
                 customResourceDefinitions: () => this.c("/apis/apiextensions.k8s.io/v1", "/customresourcedefinitions"),
@@ -65,7 +83,8 @@ export class KubernetesAPI implements IKubernetesAPI {
     public certificates(): CertificatesAPI {
         return {
             v1beta1: () => ({
-                certificateSigningRequests: () => this.c("/apis/certificates.k8s.io/v1beta1", "/certificatesigningrequests"),
+                certificateSigningRequests: () =>
+                    this.c("/apis/certificates.k8s.io/v1beta1", "/certificatesigningrequests"),
             }),
         };
     }
@@ -81,7 +100,12 @@ export class KubernetesAPI implements IKubernetesAPI {
                 persistentVolumes: () => this.c("/api/v1", "/persistentvolumes"),
                 persistentVolumeClaims: () => this.nc("/api/v1", "/persistentvolumeclaims"),
                 services: (): INamespacedResourceClient<corev1.Service, "Service", "v1"> => {
-                    const client = new NamespacedResourceClient<corev1.Service, "Service", "v1">(this.restClient, "/api/v1", "/services", this.registry);
+                    const client = new NamespacedResourceClient<corev1.Service, "Service", "v1">(
+                        this.restClient,
+                        "/api/v1",
+                        "/services",
+                        this.registry,
+                    );
                     client.supportsCollectionDeletion = false;
                     return client;
                 },
@@ -121,7 +145,8 @@ export class KubernetesAPI implements IKubernetesAPI {
         return {
             v1beta1: () => ({
                 daemonSets: () => this.nc("/apis/extensions/v1beta1", "/daemonsets"),
-                deployments: () => new resourceExtensionsV1beta1.DeploymentResourceClient(this.restClient, this.registry),
+                deployments: () =>
+                    new resourceExtensionsV1beta1.DeploymentResourceClient(this.restClient, this.registry),
                 ingresses: () => this.nc("/apis/extensions/v1beta1", "/ingresses"),
                 networkPolicies: () => this.nc("/apis/extensions/v1beta1", "/networkpolicies"),
                 replicaSets: () => this.nc("/apis/extensions/v1beta1", "/replicasets"),
@@ -132,14 +157,50 @@ export class KubernetesAPI implements IKubernetesAPI {
     public rbac(): RBACAPI {
         return {
             v1: () => ({
-                clusterRoles: () => new ResourceClient(this.restClient, "/apis/rbac.authorization.k8s.io/v1", "/clusterroles", this.registry),
-                clusterRoleBindings: () => new ResourceClient(this.restClient, "/apis/rbac.authorization.k8s.io/v1", "/clusterrolebindings", this.registry),
-                roles: () => new NamespacedResourceClient(this.restClient, "/apis/rbac.authorization.k8s.io/v1", "/roles", this.registry),
-                roleBindings: () => new NamespacedResourceClient(this.restClient, "/apis/rbac.authorization.k8s.io/v1", "/rolebindings", this.registry),
+                clusterRoles: () =>
+                    new ResourceClient(
+                        this.restClient,
+                        "/apis/rbac.authorization.k8s.io/v1",
+                        "/clusterroles",
+                        this.registry,
+                    ),
+                clusterRoleBindings: () =>
+                    new ResourceClient(
+                        this.restClient,
+                        "/apis/rbac.authorization.k8s.io/v1",
+                        "/clusterrolebindings",
+                        this.registry,
+                    ),
+                roles: () =>
+                    new NamespacedResourceClient(
+                        this.restClient,
+                        "/apis/rbac.authorization.k8s.io/v1",
+                        "/roles",
+                        this.registry,
+                    ),
+                roleBindings: () =>
+                    new NamespacedResourceClient(
+                        this.restClient,
+                        "/apis/rbac.authorization.k8s.io/v1",
+                        "/rolebindings",
+                        this.registry,
+                    ),
             }),
             v1beta1: () => ({
-                roles: () => new NamespacedResourceClient(this.restClient, "/apis/rbac.authorization.k8s.io/v1beta1", "/roles", this.registry),
-                roleBindings: () => new NamespacedResourceClient(this.restClient, "/apis/rbac.authorization.k8s.io/v1beta1", "/rolebindings", this.registry),
+                roles: () =>
+                    new NamespacedResourceClient(
+                        this.restClient,
+                        "/apis/rbac.authorization.k8s.io/v1beta1",
+                        "/roles",
+                        this.registry,
+                    ),
+                roleBindings: () =>
+                    new NamespacedResourceClient(
+                        this.restClient,
+                        "/apis/rbac.authorization.k8s.io/v1beta1",
+                        "/rolebindings",
+                        this.registry,
+                    ),
             }),
         };
     }
@@ -147,7 +208,13 @@ export class KubernetesAPI implements IKubernetesAPI {
     public policy(): PolicyAPI {
         return {
             v1beta1: () => ({
-                podDisruptionBudgets: () => new NamespacedResourceClient(this.restClient, "/apis/policy/v1beta1", "/poddisruptionbudgets", this.registry),
+                podDisruptionBudgets: () =>
+                    new NamespacedResourceClient(
+                        this.restClient,
+                        "/apis/policy/v1beta1",
+                        "/poddisruptionbudgets",
+                        this.registry,
+                    ),
             }),
         };
     }
@@ -159,5 +226,4 @@ export class KubernetesAPI implements IKubernetesAPI {
             }),
         };
     }
-
 }

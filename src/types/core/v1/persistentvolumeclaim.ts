@@ -1,6 +1,6 @@
-import {ResourceRequirements} from "./container";
-import {AccessMode} from "./persistentvolume";
-import {LabelSelector, ObjectMeta} from "../../meta/v1";
+import { ResourceRequirements } from "./container";
+import { AccessMode } from "./persistentvolume";
+import { LabelSelector, ObjectMeta } from "../../meta/v1";
 
 export interface PersistentVolumeClaimSpec {
     accessModes: AccessMode[];

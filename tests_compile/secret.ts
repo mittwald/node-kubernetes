@@ -1,4 +1,4 @@
-import {Secret} from "../src/types/core/v1";
+import { Secret } from "../src/types/core/v1";
 
 const secret: Secret = {
     metadata: {

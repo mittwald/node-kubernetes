@@ -1,6 +1,6 @@
-import {ObjectMeta} from "../../meta/v1";
-import {KeyUsage} from "./keyusage";
-import {CertificateSigningRequestCondition} from "./certificatesigningrequestcondition";
+import { ObjectMeta } from "../../meta/v1";
+import { KeyUsage } from "./keyusage";
+import { CertificateSigningRequestCondition } from "./certificatesigningrequestcondition";
 
 export interface CertificateSigningRequest {
     metadata: ObjectMeta;
@@ -14,7 +14,7 @@ export interface CertificateSigningRequestSpec {
     username?: string;
     uid?: string;
     groups?: string[];
-    extra?: {[k: string]: string[]};
+    extra?: { [k: string]: string[] };
 }
 
 export interface CertificateSigningRequestStatus {

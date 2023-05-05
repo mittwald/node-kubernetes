@@ -1,5 +1,5 @@
-import {ObjectMeta} from "../../meta/v1";
-import {Schema} from "jsonschema";
+import { ObjectMeta } from "../../meta/v1";
+import { Schema } from "jsonschema";
 
 export interface CustomResourceDefinition {
     metadata: ObjectMeta;
@@ -13,10 +13,7 @@ export type CustomResourceDefinitionSpec = {
     scope?: "Namespaced" | "Cluster";
     subresources?: CustomResourceSubresources;
     validation?: CustomResourceValidation;
-} & (
-    {version: string} |
-    {versions: CustomResourceDefinitionVersion[]}
-);
+} & ({ version: string } | { versions: CustomResourceDefinitionVersion[] });
 
 export interface CustomResourceColumnDefinition {
     JSONPath: string;
@@ -41,8 +38,7 @@ export interface CustomResourceSubresources {
     scale?: CustomResourceSubresourceScale;
 }
 
-export interface CustomResourceSubresourceStatus {
-}
+export interface CustomResourceSubresourceStatus {}
 
 export interface CustomResourceSubresourceScale {
     labelSelectorPath: string;

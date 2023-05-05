@@ -1,5 +1,5 @@
-import {LabelSelector, ObjectMeta} from "../../meta/v1";
-import {PolicyRule} from "./policyrule";
+import { LabelSelector, ObjectMeta } from "../../meta/v1";
+import { PolicyRule } from "./policyrule";
 
 export interface AggregationRule {
     clusterRoleSelectors?: LabelSelector[];

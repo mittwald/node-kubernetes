@@ -1,6 +1,6 @@
-import {ResourceList} from "../../meta";
-import {ObjectMeta} from "../../meta/v1";
-import {ObjectReference} from "./objectreference";
+import { ResourceList } from "../../meta";
+import { ObjectMeta } from "../../meta/v1";
+import { ObjectReference } from "./objectreference";
 
 export interface EndpointAddress {
     hostname?: string;
@@ -12,7 +12,7 @@ export interface EndpointAddress {
 export interface EndpointPort {
     name?: string;
     port?: number;
-    protocol?: "TCP"|"UDP";
+    protocol?: "TCP" | "UDP";
 }
 
 export interface EndpointSubset {

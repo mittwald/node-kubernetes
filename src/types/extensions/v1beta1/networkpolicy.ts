@@ -1,4 +1,4 @@
-import {LabelSelector, ObjectMeta} from "../../meta/v1";
+import { LabelSelector, ObjectMeta } from "../../meta/v1";
 
 export interface NetworkPolicy {
     metadata: ObjectMeta;
@@ -15,9 +15,9 @@ export interface NetworkPolicyIngressRule {
     ports?: NetworkPolicyPort[];
 }
 
-export type NetworkPolicyPeer = {namespaceSelector: LabelSelector} | {podSelector: LabelSelector};
+export type NetworkPolicyPeer = { namespaceSelector: LabelSelector } | { podSelector: LabelSelector };
 
 export interface NetworkPolicyPort {
-    port?: number|string;
-    protocol?: "TCP"|"UDP";
+    port?: number | string;
+    protocol?: "TCP" | "UDP";
 }

@@ -1,8 +1,8 @@
-import {ObjectMeta} from "../../meta/v1";
+import { ObjectMeta } from "../../meta/v1";
 
 export interface IngressBackend {
     serviceName: string;
-    servicePort: string|number;
+    servicePort: string | number;
 }
 
 export interface HTTPIngressPath {

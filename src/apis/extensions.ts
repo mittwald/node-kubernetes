@@ -1,5 +1,5 @@
 import * as extv1b1 from "../types/extensions/v1beta1";
-import {INamespacedResourceClient} from "../resource";
+import { INamespacedResourceClient } from "../resource";
 
 export interface ExtensionsV1beta1API {
     daemonSets(): INamespacedResourceClient<extv1b1.DaemonSet, "DaemonSet", "extensions/v1beta1">;

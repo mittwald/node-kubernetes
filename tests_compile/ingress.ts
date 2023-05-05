@@ -1,4 +1,4 @@
-import {Ingress} from "../src/types/extensions/v1beta1";
+import { Ingress } from "../src/types/extensions/v1beta1";
 
 const ingress: Ingress = {
     metadata: {

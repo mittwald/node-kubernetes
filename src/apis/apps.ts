@@ -1,6 +1,6 @@
 import * as resourceAppsV1beta1 from "./apps/v1beta1";
 import * as appsv1 from "../types/apps/v1";
-import {INamespacedResourceClient} from "../resource";
+import { INamespacedResourceClient } from "../resource";
 
 export interface AppsV1API {
     daemonSets(): INamespacedResourceClient<appsv1.DaemonSet, "DaemonSet", "apps/v1">;

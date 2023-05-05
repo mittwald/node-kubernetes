@@ -1,4 +1,4 @@
-import {GroupVersionKind, GroupVersionResource} from "../../meta/v1";
+import { GroupVersionKind, GroupVersionResource } from "../../meta/v1";
 import { Operation } from ".";
 
 export interface AdmissionRequest<TObject, TOptions = unknown> {

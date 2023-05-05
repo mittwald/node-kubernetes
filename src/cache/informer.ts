@@ -1,9 +1,9 @@
-import {InMemoryStore, ObservableStore, ObservableStoreDecorator, Store} from "./store";
-import {MetadataObject} from "../types/meta";
-import {IResourceClient} from "../resource";
-import {WatchEvent} from "../types/meta/v1";
-import {SelectorOptions} from "../client";
-import {ListWatchOptions} from "../resource_listwatch";
+import { InMemoryStore, ObservableStore, ObservableStoreDecorator, Store } from "./store";
+import { MetadataObject } from "../types/meta";
+import { IResourceClient } from "../resource";
+import { WatchEvent } from "../types/meta/v1";
+import { SelectorOptions } from "../client";
+import { ListWatchOptions } from "../resource_listwatch";
 
 const debug = require("debug")("kubernetes:informer");
 
@@ -28,21 +28,29 @@ export class Informer<TResource extends MetadataObject, TResourceOutput extends 
     ) {
         this.resource = resource;
         this.opts = opts;
-        this.store = new ObservableStoreDecorator(store || new InMemoryStore());
+        this.store = new ObservableStoreDecorator(store || new InMemoryStore<TResourceOutput>());
     }
 
     public start(): Controller {
         const handler = async (event: WatchEvent<TResourceOutput>) => {
-            const {type, object} = event;
+            const { type, object } = event;
 
             switch (type) {
                 case "ADDED":
                 case "MODIFIED":
-                    debug("added or updated object %o: %o", (object as any).kind, `${object.metadata.namespace}/${object.metadata.name}`);
+                    debug(
+                        "added or updated object %o: %o",
+                        (object as any).kind,
+                        `${object.metadata.namespace}/${object.metadata.name}`,
+                    );
                     await this.store.store(object);
                     break;
                 case "DELETED":
-                    debug("removed object %o: %s", (object as any).kind, `${object.metadata.namespace}/${object.metadata.name}`);
+                    debug(
+                        "removed object %o: %s",
+                        (object as any).kind,
+                        `${object.metadata.namespace}/${object.metadata.name}`,
+                    );
                     await this.store.pull(object);
                     break;
             }
@@ -55,7 +63,7 @@ export class Informer<TResource extends MetadataObject, TResourceOutput extends 
                 await this.store.sync(objs);
             },
             ...this.opts,
-        }
+        };
 
         const watchHandle = this.resource.listWatch(handler, undefined, opts);
 
@@ -65,5 +73,4 @@ export class Informer<TResource extends MetadataObject, TResourceOutput extends 
             stop: watchHandle.stop,
         };
     }
-
 }

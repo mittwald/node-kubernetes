@@ -1,4 +1,4 @@
-import {Service} from "../src/types/core/v1";
+import { Service } from "../src/types/core/v1";
 
 const clusterIPServiceWithDefaults: Service = {
     metadata: {
@@ -23,8 +23,6 @@ const clusterIPServiceWithExplicitConfig: Service = {
         selector: {
             "mittwald.de/test": "test",
         },
-        ports: [
-            {protocol: "TCP", targetPort: 80, port: 80},
-        ],
+        ports: [{ protocol: "TCP", targetPort: 80, port: 80 }],
     },
 };

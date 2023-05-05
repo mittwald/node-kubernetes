@@ -1,9 +1,9 @@
-import {ResourceList} from "../../meta";
-import {Affinity} from "./affinity";
-import {Container, SELinuxOptions} from "./container";
-import {PersistentVolumeSource} from "./persistentvolume";
-import {ObjectMeta} from "../../meta/v1";
-import {LocalObjectReference} from "./localobjectreference";
+import { ResourceList } from "../../meta";
+import { Affinity } from "./affinity";
+import { Container, SELinuxOptions } from "./container";
+import { PersistentVolumeSource } from "./persistentvolume";
+import { ObjectMeta } from "../../meta/v1";
+import { LocalObjectReference } from "./localobjectreference";
 
 export interface Pod {
     metadata: ObjectMeta;
@@ -19,9 +19,9 @@ export interface PodSecurityContext {
 }
 
 export interface Toleration {
-    effect?: ""|"NoSchedule"|"PreferNoSchedule"|"NoExecute";
+    effect?: "" | "NoSchedule" | "PreferNoSchedule" | "NoExecute";
     key?: string;
-    operator?: "Exists"|"Equal";
+    operator?: "Exists" | "Equal";
     tolerationSeconds?: number;
     value?: string;
 }
@@ -51,18 +51,19 @@ export interface PersistentVolumeClaimVolumeSource {
     readOnly?: boolean;
 }
 
-export type VolumeSource = PersistentVolumeSource
-    | {secret: SecretVolumeSource}
-    | {configMap: ConfigMapVolumeSource}
-    | {persistentVolumeClaim: PersistentVolumeClaimVolumeSource};
-export type Volume = {name: string} & VolumeSource;
+export type VolumeSource =
+    | PersistentVolumeSource
+    | { secret: SecretVolumeSource }
+    | { configMap: ConfigMapVolumeSource }
+    | { persistentVolumeClaim: PersistentVolumeClaimVolumeSource };
+export type Volume = { name: string } & VolumeSource;
 
 export interface PodSpec {
     activeDeadlineSeconds?: number;
     affinity?: Affinity;
     automountServiceAccountToken?: boolean;
     containers: Container[];
-    dnsPolicy?: "ClusterFirstwithHostNet"|"ClusterFirst"|"Default";
+    dnsPolicy?: "ClusterFirstwithHostNet" | "ClusterFirst" | "Default";
     hostIPC?: boolean;
     hostNetwork?: boolean;
     hostPID?: boolean;
@@ -70,8 +71,8 @@ export interface PodSpec {
     imagePullSecrets?: LocalObjectReference[];
     initContainers?: Container[];
     nodeName?: string;
-    nodeSelector?: {[label: string]: string};
-    restartPolicy?: "Always"|"OnFailure"|"Never";
+    nodeSelector?: { [label: string]: string };
+    restartPolicy?: "Always" | "OnFailure" | "Never";
     schedulerName?: string;
     securityContext?: PodSecurityContext;
     serviceAccountName?: string;
@@ -87,9 +88,9 @@ export interface PodStatus {
     hostIP: string;
     initContainerStatuses?: ContainerStatus[];
     message: string;
-    phase: "Pending"|"Running"|"Succeeded"|"Failed"|"Unknown";
+    phase: "Pending" | "Running" | "Succeeded" | "Failed" | "Unknown";
     podIP: string;
-    qosClass: "BestEffort"|"Burstable"|"Guaranteed";
+    qosClass: "BestEffort" | "Burstable" | "Guaranteed";
     reason: string;
     startTime: string;
 }
@@ -99,8 +100,8 @@ export interface PodCondition {
     lastTransitionTime: string;
     message: string;
     reason: string;
-    status: "True"|"False"|"Unknown";
-    type: "Ready"|"Initialized"|"PodScheduled";
+    status: "True" | "False" | "Unknown";
+    type: "Ready" | "Initialized" | "PodScheduled";
 }
 
 export interface ContainerStatus {
@@ -115,10 +116,10 @@ export interface ContainerStatus {
 }
 
 export type ContainerState =
-    {running: ContainerStateRunning} |
-    {terminated: ContainerStateTerminated} |
-    {waiting: ContainerStateWaiting} |
-    {};
+    | { running: ContainerStateRunning }
+    | { terminated: ContainerStateTerminated }
+    | { waiting: ContainerStateWaiting }
+    | Record<string, never>;
 
 export interface ContainerStateRunning {
     startedAt: string;
@@ -146,4 +147,4 @@ export interface PodTemplateSpec {
 
 export type PodList = ResourceList<Pod, "PodList", "v1">;
 
-export type PodWithStatus = Pod & {status: PodStatus};
+export type PodWithStatus = Pod & { status: PodStatus };

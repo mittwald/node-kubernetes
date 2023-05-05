@@ -1,6 +1,6 @@
-import {PodTemplateSpec} from "../../core/v1";
-import {LabelSelector, ObjectMeta} from "../../meta/v1";
-import {ResourceList} from "../../meta";
+import { PodTemplateSpec } from "../../core/v1";
+import { LabelSelector, ObjectMeta } from "../../meta/v1";
+import { ResourceList } from "../../meta";
 
 export interface OnDeleteDaemonSetUpdateStrategy {
     type: "OnDelete";
@@ -9,7 +9,7 @@ export interface OnDeleteDaemonSetUpdateStrategy {
 export interface RollingUpdateDaemonSetUpdateStrategy {
     type: "RollingUpdate";
     rollingUpdate?: {
-        maxUnavailable: number|string;
+        maxUnavailable: number | string;
     };
 }
 

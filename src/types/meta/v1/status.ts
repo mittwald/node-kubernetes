@@ -1,6 +1,6 @@
-import {ListMeta} from "./listmeta";
-import {StatusReason} from "./statusreason";
-import {StatusDetails} from "./statusdetails";
+import { ListMeta } from "./listmeta";
+import { StatusReason } from "./statusreason";
+import { StatusDetails } from "./statusdetails";
 
 export interface Status {
     metadata?: ListMeta;

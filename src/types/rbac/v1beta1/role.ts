@@ -1,4 +1,4 @@
-import {ObjectMeta} from "../../meta/v1";
+import { ObjectMeta } from "../../meta/v1";
 
 export interface Role {
     metadata: ObjectMeta;

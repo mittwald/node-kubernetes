@@ -1,4 +1,4 @@
-import {GenericClientConfig, KubernetesRESTClient} from "../src";
+import { GenericClientConfig, KubernetesRESTClient } from "../src";
 import nock from "nock";
 
 describe(KubernetesRESTClient.name, () => {
@@ -8,13 +8,15 @@ describe(KubernetesRESTClient.name, () => {
     beforeEach(() => {
         scope = nock("https://kubernetes");
 
-        client = new KubernetesRESTClient(new GenericClientConfig({
-            "apiVersion": "v1",
-            "users": [{name: "foo", user: {token: "foo-token"}}],
-            "clusters": [{name: "foo", cluster: {server: "https://kubernetes"}}],
-            "contexts": [{name: "foo", context: {user: "foo", cluster: "foo"}}],
-            "current-context": "foo",
-        }));
+        client = new KubernetesRESTClient(
+            new GenericClientConfig({
+                apiVersion: "v1",
+                users: [{ name: "foo", user: { token: "foo-token" } }],
+                clusters: [{ name: "foo", cluster: { server: "https://kubernetes" } }],
+                contexts: [{ name: "foo", context: { user: "foo", cluster: "foo" } }],
+                "current-context": "foo",
+            }),
+        );
     });
 
     afterEach(() => {
@@ -23,21 +25,21 @@ describe(KubernetesRESTClient.name, () => {
 
     describe("GET", () => {
         test("can load resources from server", async () => {
-            scope.get("/api/v1/foo/1").reply(200, {kind: "Test", data: {foo: "bar"}});
+            scope.get("/api/v1/foo/1").reply(200, { kind: "Test", data: { foo: "bar" } });
 
             const response = await client.get("/api/v1/foo/1");
             expect(response).toHaveProperty("kind", "Test");
         });
 
         test("can load resources from server with label selectors", async () => {
-            scope.get("/api/v1/foo/1").query({labelSelector: "spaces.de/test=foo"}).reply(200, {kind: "Test"});
+            scope.get("/api/v1/foo/1").query({ labelSelector: "spaces.de/test=foo" }).reply(200, { kind: "Test" });
 
-            const response = await client.get("/api/v1/foo/1", {labelSelector: {"spaces.de/test": "foo"}});
+            const response = await client.get("/api/v1/foo/1", { labelSelector: { "spaces.de/test": "foo" } });
             expect(response).toHaveProperty("kind", "Test");
         });
 
         test("returns undefined when server responds 404", async () => {
-            scope.get("/api/v1/foo/2").reply(404, {kind: "Status", status: "Failure", reason: "NotFound"});
+            scope.get("/api/v1/foo/2").reply(404, { kind: "Status", status: "Failure", reason: "NotFound" });
             const response = await client.get("/api/v1/foo/2");
             expect(response).toBeUndefined();
         });
@@ -56,15 +58,15 @@ describe(KubernetesRESTClient.name, () => {
 
     describe("POST", () => {
         test("can post resources to server and return response", async () => {
-            scope.post("/api/v1/foo", `{"kind":"Test"}`).reply(201, {kind: "Test", bar: "baz"});
+            scope.post("/api/v1/foo", `{"kind":"Test"}`).reply(201, { kind: "Test", bar: "baz" });
 
-            const response = await client.post("/api/v1/foo", {kind: "Test"});
+            const response = await client.post("/api/v1/foo", { kind: "Test" });
             expect(response).toHaveProperty("kind", "Test");
             expect(response).toHaveProperty("bar", "baz");
         });
 
         test("can post resources to server without body", async () => {
-            scope.post("/api/v1/foo").reply(201, {kind: "Test", bar: "baz"});
+            scope.post("/api/v1/foo").reply(201, { kind: "Test", bar: "baz" });
 
             const response = await client.post("/api/v1/foo", undefined);
             expect(response).toHaveProperty("kind", "Test");
@@ -78,16 +80,16 @@ describe(KubernetesRESTClient.name, () => {
                 reason: "InternalError",
                 message: "Go fuck yourself",
             });
-            const response = client.post("/api/v1/foo", {kind: "Test"});
+            const response = client.post("/api/v1/foo", { kind: "Test" });
             await expect(response).rejects.toHaveProperty("message", "Go fuck yourself");
         });
     });
 
     describe("PUT", () => {
         test("can put resources to server and return response", async () => {
-            scope.put("/api/v1/foo/1", `{"kind":"Test"}`).reply(200, {kind: "Test", bar: "baz"});
+            scope.put("/api/v1/foo/1", `{"kind":"Test"}`).reply(200, { kind: "Test", bar: "baz" });
 
-            const response = await client.put("/api/v1/foo/1", {kind: "Test"});
+            const response = await client.put("/api/v1/foo/1", { kind: "Test" });
             expect(response).toHaveProperty("kind", "Test");
             expect(response).toHaveProperty("bar", "baz");
         });
@@ -99,14 +101,14 @@ describe(KubernetesRESTClient.name, () => {
                 reason: "InternalError",
                 message: "Go fuck yourself",
             });
-            const response = client.put("/api/v1/foo/1", {kind: "Test"});
+            const response = client.put("/api/v1/foo/1", { kind: "Test" });
             await expect(response).rejects.toHaveProperty("message", "Go fuck yourself");
         });
     });
 
     describe("DELETE", () => {
         test("can delete resources from server and return response", async () => {
-            scope.delete("/api/v1/foo/1").reply(200, {kind: "Test", bar: "baz"});
+            scope.delete("/api/v1/foo/1").reply(200, { kind: "Test", bar: "baz" });
 
             const response = await client.delete("/api/v1/foo/1");
             expect(response).toHaveProperty("kind", "Test");
@@ -116,10 +118,10 @@ describe(KubernetesRESTClient.name, () => {
         test("can delete resources with label selector", async () => {
             scope
                 .delete("/api/v1/foo/1")
-                .query({labelSelector: "spaces.de/foo=bar"})
-                .reply(200, {kind: "Test", bar: "baz"});
+                .query({ labelSelector: "spaces.de/foo=bar" })
+                .reply(200, { kind: "Test", bar: "baz" });
 
-            const response = await client.delete("/api/v1/foo/1", {labelSelector: {"spaces.de/foo": "bar"}});
+            const response = await client.delete("/api/v1/foo/1", { labelSelector: { "spaces.de/foo": "bar" } });
             expect(response).toHaveProperty("kind", "Test");
             expect(response).toHaveProperty("bar", "baz");
         });

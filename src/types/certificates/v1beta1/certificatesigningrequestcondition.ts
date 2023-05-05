@@ -1,4 +1,4 @@
-import {RequestConditionType} from "./requestconditiontype";
+import { RequestConditionType } from "./requestconditiontype";
 
 export interface CertificateSigningRequestCondition {
     type: RequestConditionType;

@@ -1,12 +1,11 @@
-import {NamespacedResourceClient} from "../../../resource";
-import {Deployment} from "../../../types/apps/v1beta1";
-import {IKubernetesRESTClient, MandatorySelectorOptions} from "../../../client";
-import {DeleteOptions} from "../../../types/meta/v1";
-import {Registry} from "prom-client";
+import { NamespacedResourceClient } from "../../../resource";
+import { Deployment } from "../../../types/apps/v1beta1";
+import { IKubernetesRESTClient, MandatorySelectorOptions } from "../../../client";
+import { DeleteOptions } from "../../../types/meta/v1";
+import { Registry } from "prom-client";
 import * as _ from "lodash";
 
 export class DeploymentResourceClient extends NamespacedResourceClient<Deployment, "Deployment", "apps/v1beta1"> {
-
     public constructor(protected client: IKubernetesRESTClient, registry: Registry) {
         super(client, "/apis/apps/v1beta1", "/deployments", registry);
     }
@@ -23,6 +22,6 @@ export class DeploymentResourceClient extends NamespacedResourceClient<Deploymen
         const resources = await this.list(opts);
         const subOpts = _.omit(opts, "labelSelector", "fieldSelector");
 
-        await Promise.all(resources.map(r => this.delete(r, subOpts)));
+        await Promise.all(resources.map((r) => this.delete(r, subOpts)));
     }
 }

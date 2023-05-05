@@ -1,4 +1,4 @@
-import {StatusCause} from "./statuscause";
+import { StatusCause } from "./statuscause";
 
 export interface StatusDetails {
     name?: string;

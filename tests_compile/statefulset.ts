@@ -1,4 +1,4 @@
-import {StatefulSet} from "../src/types/apps/v1beta1";
+import { StatefulSet } from "../src/types/apps/v1beta1";
 
 const statefulsetWithoutVolume: StatefulSet = {
     metadata: {
@@ -15,10 +15,12 @@ const statefulsetWithoutVolume: StatefulSet = {
                 },
             },
             spec: {
-                containers: [{
-                    name: "web",
-                    image: "nginx",
-                }],
+                containers: [
+                    {
+                        name: "web",
+                        image: "nginx",
+                    },
+                ],
             },
         },
     },
@@ -39,22 +41,24 @@ const statefulsetWithVolume: StatefulSet = {
                 },
             },
             spec: {
-                containers: [{
-                    name: "web",
-                    image: "nginx",
-                }],
+                containers: [
+                    {
+                        name: "web",
+                        image: "nginx",
+                    },
+                ],
             },
         },
         volumeClaimTemplates: [
             {
                 metadata: {
-                    labels: {"mittwald.de/app": "foo-app"},
+                    labels: { "mittwald.de/app": "foo-app" },
                 },
                 spec: {
                     accessModes: ["ReadWriteOnce"],
                     storageClassName: "fast",
                     resources: {
-                        requests: {storage: "5Gi"},
+                        requests: { storage: "5Gi" },
                     },
                 },
             },
@@ -80,22 +84,24 @@ const statefulsetWithUpdateStrategy: StatefulSet = {
                 },
             },
             spec: {
-                containers: [{
-                    name: "web",
-                    image: "nginx",
-                }],
+                containers: [
+                    {
+                        name: "web",
+                        image: "nginx",
+                    },
+                ],
             },
         },
         volumeClaimTemplates: [
             {
                 metadata: {
-                    labels: {"mittwald.de/app": "foo-app"},
+                    labels: { "mittwald.de/app": "foo-app" },
                 },
                 spec: {
                     accessModes: ["ReadWriteOnce"],
                     storageClassName: "fast",
                     resources: {
-                        requests: {storage: "5Gi"},
+                        requests: { storage: "5Gi" },
                     },
                 },
             },

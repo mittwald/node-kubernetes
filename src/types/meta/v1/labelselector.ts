@@ -1,4 +1,3 @@
-
 export interface LabelSelector {
-    matchLabels?: {[l: string]: string};
+    matchLabels?: { [l: string]: string };
 }

@@ -46,6 +46,10 @@ describe("String to label selector", () => {
         const selector = parseLabelSelector("foo=bar;bar=baz");
         expect(selector).toEqual({foo: "bar", bar: "baz"});
     });
+    test("trims values if spaces are used", () => {
+        const selector = parseLabelSelector("foo = bar;bar = baz");
+        expect(selector).toEqual({foo: "bar", bar: "baz"});
+    });
     test("should parse to correct selector with different operators in items", () => {
         const selector = parseLabelSelector("foo=bar;bar!=baz");
         expect(selector).toEqual({foo: "bar", bar: {operator: "!=", values: ["baz"]}});
@@ -61,6 +65,15 @@ describe("String to label selector", () => {
     });
     test("can handle odd whitespaces around match expression operator", () => {
         const selector = parseLabelSelector("scope  in   (internal,external)");
+        expect(selector).toEqual({
+            scope: {
+                operator: "in",
+                values: ["internal", "external"]
+            }
+        });
+    });
+    test("trims whitespaces around values in match expression", () => {
+        const selector = parseLabelSelector("scope in ( internal , external )");
         expect(selector).toEqual({
             scope: {
                 operator: "in",

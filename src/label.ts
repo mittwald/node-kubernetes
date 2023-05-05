@@ -38,11 +38,12 @@ export function parseLabelSelector(input: string): Selector {
         if (regexResult !== null) {
             selector[regexResult[1]] = {
                 operator: regexResult[2] as SetBasedOperator,
-                values: regexResult[3].split(","),
+                values: regexResult[3].split(",").map((v) => v.trim()),
             };
         } else {
             const [key, operator, ...values] = item.split(/(=|!=|==)/);
-            selector[key] = operator === "=" ? values.join('') : { operator: operator as EqualityBasedOperator, values };
+            const trimmedValues = values.map((v) => v.trim());
+            selector[key.trim()] = operator === "=" ? trimmedValues.join('') : { operator: operator as EqualityBasedOperator, values: trimmedValues };
         }
     }
 

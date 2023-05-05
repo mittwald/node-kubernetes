@@ -1,0 +1,14 @@
+dist
+coverage
+package.json
+.yo-rc.json
+.prettierrc
+globalConfig.json
+tsconfig.json
+tsconfig.*.json
+build
+docs/openapispecs.json
+src/test/integration/clients/*
+assets/processes/*
+assets/charts/*
+tests_compile_out/*

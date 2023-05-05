@@ -22,6 +22,8 @@ export function selectorToString(selector: Selector, separator = ";"): string {
 
 export const selectorToQueryString = (selector: Selector) => selectorToString(selector, ",");
 
+const setBasedSelectorRegex = new RegExp("([^\(\)]*) (in|notin) \\((.*)\\)", "i");
+
 /**
  * Parse a Label Selector string to a Selector Object.
  * Label Selectors are described in the [Kubernetes documentation](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors).
@@ -32,8 +34,7 @@ export function parseLabelSelector(input: string): Selector {
     const selector: Selector = {};
 
     for (const item of input.split(";")) {
-        const regex = new RegExp("([^\(\)]*) (in|notin) \\((.*)\\)", "i");
-        const regexResult = regex.exec(item);
+        const regexResult = setBasedSelectorRegex.exec(item);
         if (regexResult !== null) {
             selector[regexResult[1]] = {
                 operator: regexResult[2] as SetBasedOperator,

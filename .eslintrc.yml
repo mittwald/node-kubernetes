@@ -1,0 +1,150 @@
+env:
+  node: true
+  jest/globals: true
+  es6: true
+extends:
+  - plugin:@typescript-eslint/recommended
+  - plugin:prettier/recommended
+  - eslint:recommended
+parser: "@typescript-eslint/parser"
+plugins:
+  - "@typescript-eslint"
+  - jest
+rules:
+  "@typescript-eslint/array-type":
+    - error
+    - default: array-simple
+  "@typescript-eslint/await-thenable": error
+  "@typescript-eslint/ban-ts-comment": warn
+  "@typescript-eslint/naming-convention":
+    - error
+    - selector: default
+      format:
+        - camelCase
+    - selector: parameter
+      format:
+        - camelCase
+      leadingUnderscore: allow
+    - selector: typeLike
+      format:
+        - PascalCase
+    - selector: enumMember
+      format:
+        - camelCase
+        - PascalCase
+        - UPPER_CASE
+      leadingUnderscore: allow
+    - selector: typeProperty
+      format:
+        - camelCase
+        - UPPER_CASE
+        - PascalCase
+      leadingUnderscore: allow
+    - selector: objectLiteralProperty
+      modifiers:
+        - requiresQuotes
+      format: null
+      leadingUnderscore: allow
+    - selector: variable
+      format:
+        - camelCase
+        - UPPER_CASE
+      leadingUnderscore: allow
+    - selector: property
+      format:
+        - camelCase
+        - UPPER_CASE
+      leadingUnderscore: allow
+  "@typescript-eslint/consistent-type-assertions": off
+  "@typescript-eslint/consistent-type-definitions":
+    - error
+    - interface
+  "@typescript-eslint/explicit-module-boundary-types": off
+  "@typescript-eslint/explicit-function-return-type":
+    - warn
+    - allowExpressions: true
+      allowHigherOrderFunctions: true
+      allowTypedFunctionExpressions: true
+  "@typescript-eslint/explicit-member-accessibility": error
+  "@typescript-eslint/member-delimiter-style":
+    - error
+    - multiline:
+        delimiter: semi
+        requireLast: true
+      singleline:
+        delimiter: semi
+        requireLast: false
+  "@typescript-eslint/member-ordering":
+    - error
+    - default:
+        - field
+        - constructor
+        - method
+  no-empty-function: off
+  "@typescript-eslint/no-empty-function": off
+  "@typescript-eslint/no-empty-interface": off
+  "@typescript-eslint/no-explicit-any": off
+  "@typescript-eslint/no-extra-parens": off
+  "@typescript-eslint/no-extraneous-class": off
+  "@typescript-eslint/no-floating-promises": error
+  "@typescript-eslint/no-for-in-array": off
+  "@typescript-eslint/no-inferrable-types": off
+  no-magic-numbers: off
+  "@typescript-eslint/no-magic-numbers": off
+  "@typescript-eslint/no-misused-new": error
+  "@typescript-eslint/no-misused-promises": error
+  "@typescript-eslint/no-namespace": error
+  "@typescript-eslint/no-non-null-assertion": off
+  "@typescript-eslint/no-parameter-properties": off
+  "@typescript-eslint/no-require-imports": off
+  "@typescript-eslint/no-this-alias": off
+  "@typescript-eslint/no-type-alias": off
+  "@typescript-eslint/no-unnecessary-qualifier": error
+  "@typescript-eslint/no-unnecessary-type-arguments": off
+  "@typescript-eslint/no-unnecessary-type-assertion": error
+  no-unused-vars: off
+  "@typescript-eslint/no-unused-vars":
+    - error
+    - varsIgnorePattern: "[iI]gnored"
+      argsIgnorePattern: "[iI]gnored"
+      caughtErrorsIgnorePattern: "[iI]gnored"
+  "@typescript-eslint/no-use-before-define": error
+  "@typescript-eslint/no-useless-constructor": error
+  "@typescript-eslint/no-var-requires": off
+  "@typescript-eslint/prefer-for-of": error
+  "@typescript-eslint/prefer-function-type": error
+  "@typescript-eslint/prefer-includes": error
+  "@typescript-eslint/prefer-namespace-keyword": error
+  "@typescript-eslint/prefer-readonly": error
+  "@typescript-eslint/prefer-regexp-exec": error
+  "@typescript-eslint/prefer-string-starts-ends-with": error
+  "@typescript-eslint/promise-function-async": off
+  "@typescript-eslint/require-array-sort-compare": off
+  "@typescript-eslint/require-await": error
+  "@typescript-eslint/restrict-plus-operands": error
+  "@typescript-eslint/semi": off
+  "@typescript-eslint/strict-boolean-expressions": off
+  "@typescript-eslint/typedef": off
+  "@typescript-eslint/unbound-method":
+    - error
+    - ignoreStatic: true
+  "@typescript-eslint/unified-signatures": error
+  indent: off
+  "@typescript-eslint/no-unnecessary-condition": error
+  linebreak-style:
+    - error
+    - unix
+  quotes:
+    - error
+    - double
+    - avoidEscape: true
+  semi:
+    - error
+    - always
+globals:
+  Atomics: readonly
+  SharedArrayBuffer: readonly
+parserOptions:
+  ecmaVersion: 2018
+  sourceType: module
+  project: ./tsconfig.eslint.json

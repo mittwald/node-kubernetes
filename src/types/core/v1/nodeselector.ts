@@ -1,4 +1,3 @@
-
 export interface NodeSelectorRequirement {
     key: string;
     operator: string;

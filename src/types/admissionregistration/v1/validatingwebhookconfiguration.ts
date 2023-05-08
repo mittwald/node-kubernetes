@@ -1,5 +1,5 @@
-import {MetadataObject} from "../../meta";
-import {LabelSelector} from "../../meta/v1";
+import { MetadataObject } from "../../meta";
+import { LabelSelector } from "../../meta/v1";
 
 export const validatingWebhookConfigurationKind = "ValidatingWebhookConfiguration";
 export type ValidatingWebhookConfigurationKind = typeof validatingWebhookConfigurationKind;
@@ -18,10 +18,10 @@ export interface ValidatingWebhook {
     objectSelector?: LabelSelector;
     sideEffects: SideEffectClass;
     timeoutSeconds?: number;
-    admissionReviewVersions: Array<"v1"|"v1beta">;
+    admissionReviewVersions: Array<"v1" | "v1beta">;
 }
 
-export type WebhookClientConfig = ({url: string} | {service: ServiceReference}) & {caBundle?: string};
+export type WebhookClientConfig = ({ url: string } | { service: ServiceReference }) & { caBundle?: string };
 
 export interface ServiceReference {
     namespace: string;

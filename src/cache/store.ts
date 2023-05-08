@@ -1,5 +1,5 @@
-import {MetadataObject} from "../types/meta";
-import {INamespacedResourceClient} from "../resource";
+import { MetadataObject } from "../types/meta";
+import { INamespacedResourceClient } from "../resource";
 
 interface CacheEntry<TResource extends MetadataObject> {
     entry: TResource;
@@ -7,10 +7,10 @@ interface CacheEntry<TResource extends MetadataObject> {
 }
 
 export interface Store<TResource extends MetadataObject> {
-    store(obj: TResource): Promise<void>;
-    get(namespace: string, name: string): Promise<TResource|undefined>;
-    pull(obj: TResource): Promise<void>;
-    sync(objs: TResource[]): Promise<void>;
+    store(obj: TResource): Promise<void> | void;
+    get(namespace: string, name: string): Promise<TResource | undefined> | TResource | undefined;
+    pull(obj: TResource): Promise<void> | void;
+    sync(objs: TResource[]): Promise<void> | void;
 }
 
 export interface ObservableStore<TResource extends MetadataObject> extends Store<TResource> {
@@ -20,12 +20,11 @@ export interface ObservableStore<TResource extends MetadataObject> extends Store
 }
 
 export class ObservableStoreDecorator<TResource extends MetadataObject> implements ObservableStore<TResource> {
-    private onStoreHandlers: ((obj: TResource) => any)[] = [];
-    private onRemoveHandlers: ((obj: TResource) => any)[] = [];
-    private onSyncedHandlers: ((objs: TResource[]) => any)[] = [];
+    private readonly onStoreHandlers: Array<(obj: TResource) => any> = [];
+    private readonly onRemoveHandlers: Array<(obj: TResource) => any> = [];
+    private readonly onSyncedHandlers: Array<(objs: TResource[]) => any> = [];
 
-    public constructor(private inner: Store<TResource>) {
-    }
+    public constructor(private readonly inner: Store<TResource>) {}
 
     public onStoredOrUpdated(fn: (obj: TResource) => any): void {
         this.onStoreHandlers.push(fn);
@@ -39,44 +38,43 @@ export class ObservableStoreDecorator<TResource extends MetadataObject> implemen
         this.onSyncedHandlers.push(fn);
     }
 
-    public get(namespace: string, name: string): Promise<TResource | undefined> {
+    public get(namespace: string, name: string): Promise<TResource | undefined> | TResource | undefined {
         return this.inner.get(namespace, name);
     }
 
     public async pull(obj: TResource): Promise<void> {
         await this.inner.pull(obj);
-        await Promise.all(this.onRemoveHandlers.map(h => h(obj)))
+        await Promise.all(this.onRemoveHandlers.map((h) => h(obj)));
     }
 
     public async store(obj: TResource): Promise<void> {
         await this.inner.store(obj);
-        await Promise.all(this.onStoreHandlers.map(h => h(obj)))
+        await Promise.all(this.onStoreHandlers.map((h) => h(obj)));
     }
 
     public async sync(objs: TResource[]): Promise<void> {
         await this.inner.sync(objs);
-        await Promise.all(this.onSyncedHandlers.map(h => h(objs)))
+        await Promise.all(this.onSyncedHandlers.map((h) => h(objs)));
     }
-
 }
 
 export class InMemoryStore<TResource extends MetadataObject> implements Store<TResource> {
     private objects = new Map<string, TResource>();
 
-    public async store(obj: TResource) {
+    public store(obj: TResource) {
         this.objects.set(`${obj.metadata.namespace}/${obj.metadata.name}`, obj);
     }
 
-    public async pull(obj: TResource) {
+    public pull(obj: TResource) {
         this.objects.delete(`${obj.metadata.namespace}/${obj.metadata.name}`);
     }
 
     public async sync(objs: TResource[]) {
         this.objects = new Map<string, TResource>();
-        await Promise.all(objs.map(o => this.store(o)))
+        await Promise.all(objs.map((o) => this.store(o)));
     }
 
-    public async get(namespace: string, name: string): Promise<TResource|undefined> {
+    public get(namespace: string, name: string): TResource | undefined {
         return this.objects.get(`${namespace}/${name}`);
     }
 }
@@ -84,11 +82,13 @@ export class InMemoryStore<TResource extends MetadataObject> implements Store<TR
 export class CachingLookupStore<TResource extends MetadataObject> implements Store<TResource> {
     private cache = new Map<string, CacheEntry<TResource>>();
 
-    public constructor(private api: INamespacedResourceClient<any, any, any, TResource>, private expirationSeconds: number = 3600) {
-    }
+    public constructor(
+        private readonly api: INamespacedResourceClient<any, any, any, TResource>,
+        private readonly expirationSeconds: number = 3600,
+    ) {}
 
     private storeInMap(obj: TResource, map: Map<string, CacheEntry<TResource>>): void {
-        const {namespace, name} = obj.metadata;
+        const { namespace, name } = obj.metadata;
         const key = `${namespace}/${name}`;
         const exp = new Date();
         exp.setSeconds(exp.getSeconds() + this.expirationSeconds);
@@ -99,11 +99,11 @@ export class CachingLookupStore<TResource extends MetadataObject> implements Sto
         });
     }
 
-    public async store(obj: TResource): Promise<void> {
+    public store(obj: TResource): void {
         this.storeInMap(obj, this.cache);
     }
 
-    public async sync(objs: TResource[]) {
+    public sync(objs: TResource[]): void {
         const newCache = new Map<string, CacheEntry<TResource>>();
 
         for (const obj of objs) {
@@ -132,11 +132,10 @@ export class CachingLookupStore<TResource extends MetadataObject> implements Sto
         return result;
     }
 
-    public async pull(obj: TResource): Promise<void> {
-        const {namespace, name} = obj.metadata;
+    public pull(obj: TResource): void {
+        const { namespace, name } = obj.metadata;
         const key = `${namespace}/${name}`;
 
         this.cache.delete(key);
     }
-
 }

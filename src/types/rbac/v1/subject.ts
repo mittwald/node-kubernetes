@@ -1,4 +1,3 @@
-
 export interface NamespacedSubject {
     apiGroup?: string;
     kind: "ServiceAccount";
@@ -8,7 +7,7 @@ export interface NamespacedSubject {
 
 export interface NonNamespacedSubject {
     apiGroup?: string;
-    kind: "User"|"Group";
+    kind: "User" | "Group";
     name: string;
 }
 

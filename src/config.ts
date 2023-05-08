@@ -1,41 +1,37 @@
 import * as fs from "fs";
 import * as yaml from "yamljs";
-import {Config} from "./types/config";
-import {AxiosRequestConfig, RawAxiosRequestHeaders} from "axios";
+import { Config } from "./types/config";
+import { AxiosRequestConfig } from "axios";
 import * as https from "https";
-import {AgentOptions} from "https";
-import {SecureClientSessionOptions} from "http2";
+import { AgentOptions } from "https";
+import { SecureClientSessionOptions } from "http2";
 import * as http2 from "http2";
 
 export interface IKubernetesClientConfig {
-
     apiServerURL: string;
     namespace: string;
 
     mapAxiosOptions<T extends AxiosRequestConfig = AxiosRequestConfig>(opts: T): T;
     mapNativeOptions<T extends SecureClientSessionOptions = SecureClientSessionOptions>(opts: T): T;
     mapHeaders(headers: Record<string, string>): Record<string, string>;
-
 }
 
 export class GenericClientConfig implements IKubernetesClientConfig {
-
     public apiServerURL: string;
     public namespace: string;
 
-    public constructor(private kubeconfig: Config) {
-        const context = this.kubeconfig.contexts.find(c => c.name === this.kubeconfig["current-context"])!;
-        const cluster = this.kubeconfig.clusters.find(c => c.name === context.context.cluster)!;
-        const user = this.kubeconfig.users.find(c => c.name === context.context.user)!;
+    public constructor(private readonly kubeconfig: Config) {
+        const context = this.kubeconfig.contexts.find((c) => c.name === this.kubeconfig["current-context"])!;
+        const cluster = this.kubeconfig.clusters.find((c) => c.name === context.context.cluster)!;
 
         this.apiServerURL = cluster.cluster.server.replace(/\/$/, "");
         this.namespace = context.context.namespace || "default";
     }
 
     private getHTTPSAgentOptions(): AgentOptions {
-        const context = this.kubeconfig.contexts.find(c => c.name === this.kubeconfig["current-context"])!;
-        const cluster = this.kubeconfig.clusters.find(c => c.name === context.context.cluster)!;
-        const user = this.kubeconfig.users.find(c => c.name === context.context.user)!;
+        const context = this.kubeconfig.contexts.find((c) => c.name === this.kubeconfig["current-context"])!;
+        const cluster = this.kubeconfig.clusters.find((c) => c.name === context.context.cluster)!;
+        const user = this.kubeconfig.users.find((c) => c.name === context.context.user)!;
 
         const httpsOpts: AgentOptions = {};
 
@@ -84,25 +80,26 @@ export class GenericClientConfig implements IKubernetesClientConfig {
     }
 
     public mapHeaders(headers: Record<string, string>): Record<string, string> {
-        const context = this.kubeconfig.contexts.find(c => c.name === this.kubeconfig["current-context"])!;
-        const user = this.kubeconfig.users.find(c => c.name === context.context.user)!;
+        const context = this.kubeconfig.contexts.find((c) => c.name === this.kubeconfig["current-context"])!;
+        const user = this.kubeconfig.users.find((c) => c.name === context.context.user)!;
 
-        const out = {...headers};
+        const out = { ...headers };
 
         if (user.user.token) {
             out[http2.constants.HTTP2_HEADER_AUTHORIZATION] = "Bearer " + user.user.token;
         }
 
         if (user.user.username && user.user.password) {
-            out[http2.constants.HTTP2_HEADER_AUTHORIZATION] = "Basic " + Buffer.from(user.user.username + ":" + user.user.password).toString("base64");
+            out[http2.constants.HTTP2_HEADER_AUTHORIZATION] =
+                "Basic " + Buffer.from(user.user.username + ":" + user.user.password).toString("base64");
         }
 
         return out;
     }
 
     public mapAxiosOptions<T extends AxiosRequestConfig = AxiosRequestConfig>(opts: T): T {
-        const context = this.kubeconfig.contexts.find(c => c.name === this.kubeconfig["current-context"])!;
-        const user = this.kubeconfig.users.find(c => c.name === context.context.user)!;
+        const context = this.kubeconfig.contexts.find((c) => c.name === this.kubeconfig["current-context"])!;
+        const user = this.kubeconfig.users.find((c) => c.name === context.context.user)!;
 
         if (!opts.headers) {
             opts.headers = {};
@@ -113,7 +110,7 @@ export class GenericClientConfig implements IKubernetesClientConfig {
         }
 
         if (user.user.username && user.user.password) {
-            opts.auth = {username: user.user.username, password: user.user.password};
+            opts.auth = { username: user.user.username, password: user.user.password };
         }
 
         const headers = this.mapHeaders({});
@@ -139,28 +136,33 @@ export class FileBasedConfig extends GenericClientConfig {
 export class InClusterConfig extends GenericClientConfig {
     public constructor(namespace?: string) {
         const kubeconfig: Config = {
-            "apiVersion": "v1",
-            "clusters": [{
-                name: "local",
-                cluster: {
-                    "certificate-authority": "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt",
-                    "server": "https://kubernetes.default",
+            apiVersion: "v1",
+            clusters: [
+                {
+                    name: "local",
+                    cluster: {
+                        "certificate-authority": "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt",
+                        server: "https://kubernetes.default",
+                    },
                 },
-            }],
-            "users": [{
-                name: "serviceaccount",
-                user: {
-                    token: fs.readFileSync("/var/run/secrets/kubernetes.io/serviceaccount/token", "utf-8"),
+            ],
+            users: [
+                {
+                    name: "serviceaccount",
+                    user: {
+                        token: fs.readFileSync("/var/run/secrets/kubernetes.io/serviceaccount/token", "utf-8"),
+                    },
                 },
-            }],
-            "contexts": [{
-                name: "local",
-                context: {cluster: "local", user: "serviceaccount", namespace: namespace || "default"},
-            }],
+            ],
+            contexts: [
+                {
+                    name: "local",
+                    context: { cluster: "local", user: "serviceaccount", namespace: namespace || "default" },
+                },
+            ],
             "current-context": "local",
         };
 
         super(kubeconfig);
     }
-
 }

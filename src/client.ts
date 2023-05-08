@@ -1,25 +1,26 @@
-import {IKubernetesClientConfig} from "./config";
-import {Selector, selectorToQueryString} from "./label";
-import {isStatus, MetadataObject} from "./types/meta";
-import {DeleteOptions, WatchEvent} from "./types/meta/v1";
-import {redactResponseBodyForLogging} from "./security";
-import axios, {AxiosRequestConfig} from "axios";
+import { IKubernetesClientConfig } from "./config";
+import { Selector, selectorToQueryString } from "./label";
+import { isStatus, MetadataObject } from "./types/meta";
+import { DeleteOptions, WatchEvent } from "./types/meta/v1";
+import { redactResponseBodyForLogging } from "./security";
+import axios, { AxiosRequestConfig } from "axios";
 import * as http2 from "http2";
-import {SecureClientSessionOptions} from "http2";
+import { SecureClientSessionOptions } from "http2";
 import qs from "qs";
+
+// should be NodeJS.Timer but NodeJS is not defined
+type Timer = ReturnType<typeof setInterval>;
 
 const debug = require("debug")("kubernetes:client");
 
 export type RequestMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
-export type SelectorOptions = {
+export interface SelectorOptions {
     labelSelector?: Selector;
     fieldSelector?: Selector;
-};
+}
 
-export type MandatorySelectorOptions =
-    | { labelSelector: Selector }
-    | { fieldSelector: Selector };
+export type MandatorySelectorOptions = { labelSelector: Selector } | { fieldSelector: Selector };
 
 export type WatchOptions = SelectorOptions & {
     resourceVersion?: number;
@@ -40,10 +41,7 @@ export interface WatchResult {
 export const patchKindStrategicMergePatch = "application/stategic-merge-patch+json";
 export const patchKindMergePatch = "application/merge-patch+json";
 export const patchKindJSONPatch = "application/json-patch+json";
-export type PatchKind =
-    | typeof patchKindStrategicMergePatch
-    | typeof patchKindMergePatch
-    | typeof patchKindJSONPatch;
+export type PatchKind = typeof patchKindStrategicMergePatch | typeof patchKindMergePatch | typeof patchKindJSONPatch;
 
 export interface IKubernetesRESTClient {
     post<R = any>(url: string, body: any): Promise<R>;
@@ -56,17 +54,25 @@ export interface IKubernetesRESTClient {
 
     get<R = any>(url: string, opts?: ListOptions): Promise<R | undefined>;
 
-    watch<R extends MetadataObject = MetadataObject>(url: string, onUpdate: (o: WatchEvent<R>) => any, onError: (err: any) => any, opts?: WatchOptions): Promise<WatchResult>;
+    watch<R extends MetadataObject = MetadataObject>(
+        url: string,
+        onUpdate: (o: WatchEvent<R>) => any,
+        onError: (err: any) => any,
+        opts?: WatchOptions,
+    ): Promise<WatchResult>;
 }
 
 const joinURL = (left: string, right: string) => (left + "/" + right).replace(/([^:])(\/\/)/g, "$1/");
 
 export class KubernetesRESTClient implements IKubernetesRESTClient {
+    public constructor(private readonly config: IKubernetesClientConfig) {}
 
-    public constructor(private config: IKubernetesClientConfig) {
-    }
-
-    private async request<R = any>(url: string, body?: any, method: RequestMethod = "POST", additionalOptions: AxiosRequestConfig = {}): Promise<R> {
+    private async request<R = any>(
+        url: string,
+        body?: any,
+        method: RequestMethod = "POST",
+        additionalOptions: AxiosRequestConfig = {},
+    ): Promise<R> {
         const absoluteURL = joinURL(this.config.apiServerURL, url);
 
         let opts: AxiosRequestConfig = {
@@ -83,10 +89,10 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
         opts = this.config.mapAxiosOptions(opts);
 
         if (additionalOptions.headers) {
-            additionalOptions.headers = {...(opts.headers || {}), ...additionalOptions.headers};
+            additionalOptions.headers = { ...(opts.headers || {}), ...additionalOptions.headers };
         }
 
-        opts = {...opts, ...additionalOptions};
+        opts = { ...opts, ...additionalOptions };
 
         debug(`executing ${method} request on ${opts.url}`);
 
@@ -97,7 +103,11 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
             throw new Error(responseBody.message);
         }
 
-        debug(`${method} request on ${opts.url} succeeded with status ${response.status}: ${redactResponseBodyForLogging(responseBody)}`);
+        debug(
+            `${method} request on ${opts.url} succeeded with status ${response.status}: ${redactResponseBodyForLogging(
+                responseBody,
+            )}`,
+        );
         return responseBody;
     }
 
@@ -113,11 +123,16 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
         return this.request<R>(url, body, "PATCH", {
             headers: {
                 "Content-Type": patchKind,
-            }
+            },
         });
     }
 
-    public delete<R = any>(url: string, deleteOptions?: ListOptions, queryParams: { [k: string]: string } = {}, body?: any): Promise<R> {
+    public delete<R = any>(
+        url: string,
+        deleteOptions?: ListOptions,
+        queryParams: { [k: string]: string } = {},
+        body?: any,
+    ): Promise<R> {
         const opts: AxiosRequestConfig = {};
 
         opts.params = queryParams;
@@ -140,8 +155,8 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
         watchOpts: WatchOptions = {},
     ): Promise<WatchResult> {
         const absoluteURL = joinURL(this.config.apiServerURL, url);
-        const params: Record<string, string> = {watch: "true"};
-        const {pingIntervalSeconds = 15} = watchOpts;
+        const params: Record<string, string> = { watch: "true" };
+        const { pingIntervalSeconds = 15 } = watchOpts;
 
         if (watchOpts.labelSelector) {
             params.labelSelector = selectorToQueryString(watchOpts.labelSelector);
@@ -155,12 +170,12 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
             params.resourceVersion = `${watchOpts.resourceVersion}`;
         }
 
-        let clientPingInterval: NodeJS.Timeout | undefined;
+        let clientPingInterval: Timer | undefined;
 
         const clientOpts: SecureClientSessionOptions = this.config.mapNativeOptions({});
-        const client = http2.connect(this.config.apiServerURL, clientOpts, (session, socket) => {
+        const client = http2.connect(this.config.apiServerURL, clientOpts, (session) => {
             clientPingInterval = setInterval(() => {
-                session.ping((err, duration) => {
+                session.ping((err) => {
                     if (err) {
                         debug("error on HTTP/2 client ping: %O", err);
                         session.destroy(err);
@@ -186,22 +201,22 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
             let buffer = "";
 
             request.on("error", (err: any) => {
-                debug(`watch: error: %O`, err);
+                debug("watch: error: %O", err);
                 rej(err);
             });
 
-            request.on("response", (headers, flags) => {
+            request.on("response", (headers) => {
                 const status = headers[":status"];
-                debug(`%o request on %o completed with status %o`, "WATCH", absoluteURL, status);
+                debug("%o request on %o completed with status %o", "WATCH", absoluteURL, status);
 
                 if (status && status >= 400) {
                     if (status === 410) {
-                        debug(`last known resource has expired -- resync required`);
-                        res({resourceVersion: lastVersion, resyncRequired: true});
+                        debug("last known resource has expired -- resync required");
+                        res({ resourceVersion: lastVersion, resyncRequired: true });
                         return;
                     }
 
-                    rej(new Error("Unexpected status code: " + status));
+                    rej(new Error(`Unexpected status code: ${status}`));
                     return;
                 }
             });
@@ -215,7 +230,7 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
                     const parsedBody = JSON.parse(body);
 
                     if (isStatus(parsedBody) && parsedBody.status === "Failure") {
-                        debug(`watch: failed with status %O`, parsedBody);
+                        debug("watch: failed with status %O", parsedBody);
                         rej(parsedBody.message);
                         return;
                     }
@@ -223,10 +238,10 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
                     // this is fine; the request body is not guaranteed to be a single JSON document.
                 }
 
-                res({resourceVersion: lastVersion});
+                res({ resourceVersion: lastVersion });
             });
 
-            request.on("data", async (chunk: Buffer | string) => {
+            request.on("data", (chunk: Buffer | string) => {
                 if (chunk instanceof Buffer) {
                     chunk = chunk.toString("utf-8");
                 }
@@ -245,24 +260,25 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
                     const obj: WatchEvent<R> = JSON.parse(buffer);
                     buffer = "";
 
-                    const resourceVersion = obj.object.metadata.resourceVersion ? parseInt(obj.object.metadata.resourceVersion, 10) : -1;
+                    const resourceVersion = obj.object.metadata.resourceVersion
+                        ? parseInt(obj.object.metadata.resourceVersion, 10)
+                        : -1;
                     if (resourceVersion > lastVersion) {
                         debug(`watch: emitting ${obj.type} event for ${obj.object.metadata.name}`);
 
                         lastVersion = resourceVersion;
-                        await onUpdate(obj);
+                        onUpdate(obj).catch(onError);
                     }
                 } catch (err) {
                     onError(err);
                 }
             });
         });
-
     }
 
     public async get<R = any>(url: string, listOptions: ListOptions = {}): Promise<R | undefined> {
         const absoluteURL = joinURL(this.config.apiServerURL, url);
-        const {labelSelector, fieldSelector} = listOptions;
+        const { labelSelector, fieldSelector } = listOptions;
 
         let opts: AxiosRequestConfig = {
             url: absoluteURL,
@@ -285,7 +301,7 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
         const response = await axios(opts);
 
         if (response.status === 404) {
-            debug(`GET request on %o failed with status %o`, opts.url, response.status);
+            debug("GET request on %o failed with status %o", opts.url, response.status);
 
             return undefined;
         }
@@ -295,13 +311,12 @@ export class KubernetesRESTClient implements IKubernetesRESTClient {
                 return undefined;
             }
 
-            debug(`executing GET request on %o failed. response body: %O`, response.status, response.data);
+            debug("executing GET request on %o failed. response body: %O", response.status, response.data);
 
-            throw(new Error(response.data.message));
+            throw new Error(response.data.message);
         }
 
-        debug(`GET request on %o succeeded with status %o: %O`, opts.url, response.status, response.data);
+        debug("GET request on %o succeeded with status %o: %O", opts.url, response.status, response.data);
         return response.data;
     }
-
 }

@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 export interface Cluster {
     name: string;
     cluster: {
         "certificate-authority-data"?: string;
         "certificate-authority"?: string;
-        "server": string;
+        server: string;
     };
 }
 
@@ -22,10 +23,10 @@ export interface User {
         "client-certificate-data"?: string;
         "client-certificate"?: string;
         "client-key-data"?: string;
-        "client-key"?: string
-        "password"?: string;
-        "username"?: string;
-        "token"?: string;
+        "client-key"?: string;
+        password?: string;
+        username?: string;
+        token?: string;
     };
 }
 

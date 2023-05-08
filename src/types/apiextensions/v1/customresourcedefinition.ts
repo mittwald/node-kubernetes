@@ -1,9 +1,10 @@
-import {ObjectMeta} from "../../meta/v1";
-import {Schema} from "jsonschema";
-import {WebhookClientConfig} from "../../admissionregistration/v1";
+/* eslint-disable @typescript-eslint/naming-convention */
+import { ObjectMeta } from "../../meta/v1";
+import { Schema } from "jsonschema";
+import { WebhookClientConfig } from "../../admissionregistration/v1";
 
 export interface CustomResourceDefinition {
-    description?: string
+    description?: string;
     kind?: string;
     metadata: ObjectMeta;
     spec: CustomResourceDefinitionSpec;
@@ -20,7 +21,7 @@ export interface CustomResourceConversion {
     webhook?: WebhookConversion;
 }
 
-export type CustomResourceDefinitionSpec = {
+export interface CustomResourceDefinitionSpec {
     conversion?: CustomResourceConversion;
     group: string;
     names: CustomResourceDefinitionNames;
@@ -52,8 +53,7 @@ export interface CustomResourceSubresources {
     scale?: CustomResourceSubresourceScale;
 }
 
-export interface CustomResourceSubresourceStatus {
-}
+export interface CustomResourceSubresourceStatus {}
 
 export interface CustomResourceSubresourceScale {
     labelSelectorPath: string;
@@ -72,7 +72,7 @@ export interface CustomResourceValidation {
         default?: any;
         example?: any;
         externalDocs?: ExternalDocumentation;
-        nullable?: boolean
+        nullable?: boolean;
 
         "x-kubernetes-embedded-resource"?: boolean;
         "x-kubernetes-int-or-string"?: boolean;
@@ -91,5 +91,5 @@ export interface CustomResourceDefinitionVersion {
     schema?: CustomResourceValidation;
     served: boolean;
     storage: boolean;
-    subresources?: CustomResourceSubresources
+    subresources?: CustomResourceSubresources;
 }

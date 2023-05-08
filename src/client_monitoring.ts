@@ -1,17 +1,16 @@
-import {IKubernetesRESTClient, ListOptions, PatchKind, WatchOptions, WatchResult} from "./client";
-import {Counter, Histogram, Registry} from "prom-client";
-import {DeleteOptions, WatchEvent} from "./types/meta/v1";
-import {MetadataObject} from "./types/meta";
+import { IKubernetesRESTClient, ListOptions, PatchKind, WatchOptions, WatchResult } from "./client";
+import { Counter, Histogram, Registry } from "prom-client";
+import { DeleteOptions, WatchEvent } from "./types/meta/v1";
+import { MetadataObject } from "./types/meta";
 
 const apiMetricLabels = ["method"];
-type APIMetricLabels = typeof apiMetricLabels[0];
+type APIMetricLabels = (typeof apiMetricLabels)[0];
 
 export class MonitoringKubernetesRESTClient implements IKubernetesRESTClient {
+    private readonly requestLatencies: Histogram<APIMetricLabels>;
+    private readonly errorCount: Counter<APIMetricLabels>;
 
-    private requestLatencies: Histogram<APIMetricLabels>;
-    private errorCount: Counter<APIMetricLabels>;
-
-    public constructor(private inner: IKubernetesRESTClient, registry: Registry) {
+    public constructor(private readonly inner: IKubernetesRESTClient, registry: Registry) {
         this.requestLatencies = new Histogram({
             name: "kubernetes_api_request_latency_milliseconds",
             help: "Latency in milliseconds for requests to the Kubernetes API server",
@@ -27,12 +26,12 @@ export class MonitoringKubernetesRESTClient implements IKubernetesRESTClient {
         });
     }
 
-    private async wrap(method: string, fn: () => Promise<any>) {
-        const timer = this.requestLatencies.startTimer({method});
+    private async wrap<T>(method: string, fn: () => Promise<T>): Promise<T> {
+        const timer = this.requestLatencies.startTimer({ method });
         try {
             return await fn();
         } catch (err) {
-            this.errorCount.inc({method});
+            this.errorCount.inc({ method });
             throw err;
         } finally {
             timer();
@@ -47,7 +46,12 @@ export class MonitoringKubernetesRESTClient implements IKubernetesRESTClient {
         return this.wrap("put", () => this.inner.put(url, body));
     }
 
-    public async delete<R>(url: string, opts?: DeleteOptions, queryParams?: { [p: string]: string }, body?: any): Promise<R> {
+    public async delete<R>(
+        url: string,
+        opts?: DeleteOptions,
+        queryParams?: { [p: string]: string },
+        body?: any,
+    ): Promise<R> {
         return this.wrap("delete", () => this.inner.delete(url, opts, queryParams, body));
     }
 
@@ -59,8 +63,12 @@ export class MonitoringKubernetesRESTClient implements IKubernetesRESTClient {
         return this.wrap("patch", () => this.inner.patch(url, body, patchKind));
     }
 
-    public watch<R extends MetadataObject>(url: string, onUpdate: (o: WatchEvent<R>) => any, onError: (err: any) => any, opts?: WatchOptions): Promise<WatchResult> {
+    public watch<R extends MetadataObject>(
+        url: string,
+        onUpdate: (o: WatchEvent<R>) => any,
+        onError: (err: any) => any,
+        opts?: WatchOptions,
+    ): Promise<WatchResult> {
         return this.wrap("watch", () => this.inner.watch(url, onUpdate, onError, opts));
     }
-
 }

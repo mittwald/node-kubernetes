@@ -5,7 +5,11 @@ export interface ListWatchErrorReaction {
 
 export type ListWatchErrorStrategy = (err: any, errCount: number) => ListWatchErrorReaction;
 
-export const DefaultListWatchErrorStrategy: ListWatchErrorStrategy = (err: any, errCount: number): ListWatchErrorReaction => {
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export const DefaultListWatchErrorStrategy: ListWatchErrorStrategy = (
+    err: any,
+    errCount: number,
+): ListWatchErrorReaction => {
     if (err.code === "ECONNRESET") {
         return {
             resync: false,

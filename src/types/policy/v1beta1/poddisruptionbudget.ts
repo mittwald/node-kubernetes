@@ -1,4 +1,4 @@
-import {LabelSelector, ObjectMeta} from "../../meta/v1";
+import { LabelSelector, ObjectMeta } from "../../meta/v1";
 
 export interface PodDisruptionBudget {
     metadata: ObjectMeta;
@@ -7,8 +7,11 @@ export interface PodDisruptionBudget {
 
 export type PodDisruptionBudgetSpec = {
     selector: LabelSelector;
-} & ({
-    maxUnavailable: number|string;
-} | {
-    minAvailable: number|string;
-});
+} & (
+    | {
+          maxUnavailable: number | string;
+      }
+    | {
+          minAvailable: number | string;
+      }
+);

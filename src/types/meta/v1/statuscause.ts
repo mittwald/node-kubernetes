@@ -1,4 +1,4 @@
-import {CauseType} from "./causetype";
+import { CauseType } from "./causetype";
 
 export interface StatusCause {
     type?: CauseType;

@@ -1,5 +1,5 @@
-import {NodeSelector, NodeSelectorTerm} from "./nodeselector";
-import {LabelSelector} from "../../meta/v1";
+import { NodeSelector, NodeSelectorTerm } from "./nodeselector";
+import { LabelSelector } from "../../meta/v1";
 
 export interface PreferredSchedulingTerm {
     preference: NodeSelectorTerm;
@@ -32,4 +32,7 @@ export interface PodAntiAffinity {
     requiredDuringSchedulingIgnoredDuringExecution?: PodAffinityTerm[];
 }
 
-export type Affinity = {nodeAffinity: NodeAffinity} | {podAffinity: PodAffinity} | {podAntiAffinity: PodAntiAffinity};
+export type Affinity =
+    | { nodeAffinity: NodeAffinity }
+    | { podAffinity: PodAffinity }
+    | { podAntiAffinity: PodAntiAffinity };

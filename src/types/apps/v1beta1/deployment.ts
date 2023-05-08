@@ -1,15 +1,15 @@
-import {PodTemplateSpec} from "../../core/v1";
-import {LabelSelector, ObjectMeta} from "../../meta/v1";
+import { PodTemplateSpec } from "../../core/v1";
+import { LabelSelector, ObjectMeta } from "../../meta/v1";
 
 export interface RollbackConfig {
     revision: number;
 }
 
 export interface DeploymentStrategy {
-    type?: "Recreate"|"RollingUpdate";
+    type?: "Recreate" | "RollingUpdate";
     rollingUpdate?: {
-        maxSurge: number|string;
-        maxUnavailable: number|string;
+        maxSurge: number | string;
+        maxUnavailable: number | string;
     };
 }
 

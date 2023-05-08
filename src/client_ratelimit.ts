@@ -1,12 +1,12 @@
-import {IKubernetesRESTClient, ListOptions, PatchKind, WatchOptions, WatchResult} from "./client";
+import { IKubernetesRESTClient, ListOptions, PatchKind, WatchOptions, WatchResult } from "./client";
 import Bottleneck from "bottleneck";
-import {DeleteOptions, WatchEvent} from "./types/meta/v1";
-import {MetadataObject} from "./types/meta";
+import { DeleteOptions, WatchEvent } from "./types/meta/v1";
+import { MetadataObject } from "./types/meta";
 
 export class RatelimitedKubernetesRESTClient implements IKubernetesRESTClient {
-    private limiter: Bottleneck;
+    private readonly limiter: Bottleneck;
 
-    public constructor(private inner: IKubernetesRESTClient, limiter?: Bottleneck) {
+    public constructor(private readonly inner: IKubernetesRESTClient, limiter?: Bottleneck) {
         if (!limiter) {
             limiter = new Bottleneck({
                 maxConcurrent: 2,
@@ -37,7 +37,12 @@ export class RatelimitedKubernetesRESTClient implements IKubernetesRESTClient {
         return this.limiter.schedule(() => this.inner.patch(url, body, patchKind));
     }
 
-    public watch<R extends MetadataObject>(url: string, onUpdate: (o: WatchEvent<R>) => any, onError: (err: any) => any, opts?: WatchOptions): Promise<WatchResult> {
+    public watch<R extends MetadataObject>(
+        url: string,
+        onUpdate: (o: WatchEvent<R>) => any,
+        onError: (err: any) => any,
+        opts?: WatchOptions,
+    ): Promise<WatchResult> {
         return this.limiter.schedule(() => this.inner.watch(url, onUpdate, onError, opts));
     }
 }

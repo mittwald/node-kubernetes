@@ -1,4 +1,3 @@
-
 export interface RoleRef {
     apiGroup: string;
     kind: string;

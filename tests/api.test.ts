@@ -1,13 +1,15 @@
 import nock from "nock";
-import {CoreV1API, GenericClientConfig, IKubernetesRESTClient, KubernetesAPI, KubernetesRESTClient} from "../src";
-import {Pod, PodList, ServiceList} from "../src/types/core/v1";
-import {Registry} from "prom-client";
+import { CoreV1API, GenericClientConfig, IKubernetesRESTClient, KubernetesAPI, KubernetesRESTClient } from "../src";
+import { Pod, PodList, ServiceList } from "../src/types/core/v1";
+import { Registry } from "prom-client";
 import { RequestBodyMatcher } from "nock";
 import deepEqual from "deep-equal";
 
-const matchesBody = <T>(expected: T): RequestBodyMatcher => (given: unknown): given is T => {
-    return deepEqual(expected, given);
-};
+const matchesBody =
+    <T>(expected: T): RequestBodyMatcher =>
+    (given: unknown): given is T => {
+        return deepEqual(expected, given);
+    };
 
 describe("Kubernetes API client", () => {
     let scope: nock.Scope;
@@ -18,13 +20,15 @@ describe("Kubernetes API client", () => {
     beforeEach(() => {
         registry = new Registry();
         scope = nock("https://kubernetes");
-        client = new KubernetesRESTClient(new GenericClientConfig({
-            "apiVersion": "v1",
-            "users": [{name: "foo", user: {token: "foo-token"}}],
-            "clusters": [{name: "foo", cluster: {server: "https://kubernetes"}}],
-            "contexts": [{name: "foo", context: {user: "foo", cluster: "foo"}}],
-            "current-context": "foo",
-        }));
+        client = new KubernetesRESTClient(
+            new GenericClientConfig({
+                apiVersion: "v1",
+                users: [{ name: "foo", user: { token: "foo-token" } }],
+                clusters: [{ name: "foo", cluster: { server: "https://kubernetes" } }],
+                contexts: [{ name: "foo", context: { user: "foo", cluster: "foo" } }],
+                "current-context": "foo",
+            }),
+        );
         api = new KubernetesAPI(client, registry).core().v1();
     });
 
@@ -33,19 +37,18 @@ describe("Kubernetes API client", () => {
     });
 
     describe("Pods API", () => {
-
         const podListData: PodList = {
             apiVersion: "v1",
             kind: "PodList",
-            metadata: {continue: "", resourceVersion: "0"},
+            metadata: { continue: "", resourceVersion: "0" },
             items: [
                 {
-                    metadata: {name: "foo-pod"},
-                    spec: {containers: [{name: "foo", image: "nginx"}]},
+                    metadata: { name: "foo-pod" },
+                    spec: { containers: [{ name: "foo", image: "nginx" }] },
                 },
                 {
-                    metadata: {name: "bar-pod"},
-                    spec: {containers: [{name: "bar", image: "nginx"}]},
+                    metadata: { name: "bar-pod" },
+                    spec: { containers: [{ name: "bar", image: "nginx" }] },
                 },
             ],
         };
@@ -71,30 +74,35 @@ describe("Kubernetes API client", () => {
         test("should list pods by label selector", async () => {
             scope
                 .get("/api/v1/namespaces/test/pods")
-                .query({labelSelector: "spaces.de/test=test"})
+                .query({ labelSelector: "spaces.de/test=test" })
                 .reply(200, podListData);
 
-            const podList = await api.pods().namespace("test").list({labelSelector: {"spaces.de/test": "test"}});
+            const podList = await api
+                .pods()
+                .namespace("test")
+                .list({ labelSelector: { "spaces.de/test": "test" } });
             expect(podList).toHaveLength(2);
         });
 
         test("should create new pods", async () => {
-            const newPodInput: Pod = {metadata: {name: "some-pod"}, spec: {containers: [{name: "web", image: "nginx"}]}};
+            const newPodInput: Pod = {
+                metadata: { name: "some-pod" },
+                spec: { containers: [{ name: "web", image: "nginx" }] },
+            };
 
-            scope
-                .post("/api/v1/namespaces/test/pods", matchesBody(newPodInput))
-                .reply(200, newPodInput);
+            scope.post("/api/v1/namespaces/test/pods", matchesBody(newPodInput)).reply(200, newPodInput);
 
             const pod = await api.pods().namespace("test").post(newPodInput);
             expect(pod).toHaveProperty("metadata.name", "some-pod");
         });
 
         test("should update existing pods", async () => {
-            const podInput: Pod = {metadata: {name: "some-pod"}, spec: {containers: [{name: "web", image: "nginx"}]}};
+            const podInput: Pod = {
+                metadata: { name: "some-pod" },
+                spec: { containers: [{ name: "web", image: "nginx" }] },
+            };
 
-            scope
-                .put("/api/v1/namespaces/test/pods/some-pod", matchesBody(podInput))
-                .reply(200, podInput);
+            scope.put("/api/v1/namespaces/test/pods/some-pod", matchesBody(podInput)).reply(200, podInput);
 
             const pod = await api.pods().namespace("test").put(podInput);
             expect(pod).toHaveProperty("metadata.name", "some-pod");
@@ -102,13 +110,11 @@ describe("Kubernetes API client", () => {
 
         test("namespace of existing pod overrides client namespace", async () => {
             const podInput: Pod = {
-                metadata: {name: "some-pod", namespace: "override"},
-                spec: {containers: [{name: "web", image: "nginx"}]},
+                metadata: { name: "some-pod", namespace: "override" },
+                spec: { containers: [{ name: "web", image: "nginx" }] },
             };
 
-            scope
-                .put("/api/v1/namespaces/override/pods/some-pod", matchesBody(podInput))
-                .reply(200, podInput);
+            scope.put("/api/v1/namespaces/override/pods/some-pod", matchesBody(podInput)).reply(200, podInput);
 
             const pod = await api.pods().namespace("test").put(podInput);
             expect(pod).toHaveProperty("metadata.name", "some-pod");
@@ -121,8 +127,8 @@ describe("Kubernetes API client", () => {
 
         test("should delete existing pods by object", async () => {
             const podInput: Pod = {
-                metadata: {name: "some-pod", namespace: "test"},
-                spec: {containers: [{name: "web", image: "nginx"}]},
+                metadata: { name: "some-pod", namespace: "test" },
+                spec: { containers: [{ name: "web", image: "nginx" }] },
             };
 
             scope.delete("/api/v1/namespaces/test/pods/some-pod").reply(200, {});
@@ -130,41 +136,44 @@ describe("Kubernetes API client", () => {
         });
 
         test("should delete many pods by label selector", async () => {
-            scope
-                .delete("/api/v1/namespaces/test/pods")
-                .query({labelSelector: "spaces.de/test=foo"})
-                .reply(200, {});
-            await api.pods().namespace("test").deleteMany({labelSelector: {"spaces.de/test": "foo"}});
+            scope.delete("/api/v1/namespaces/test/pods").query({ labelSelector: "spaces.de/test=foo" }).reply(200, {});
+            await api
+                .pods()
+                .namespace("test")
+                .deleteMany({ labelSelector: { "spaces.de/test": "foo" } });
         });
-
     });
 
     describe("Services API", () => {
-
         const serviceListData: ServiceList = {
             apiVersion: "v1",
             kind: "ServiceList",
-            metadata: {continue: "", resourceVersion: "0"},
+            metadata: { continue: "", resourceVersion: "0" },
             items: [
                 {
-                    metadata: {name: "foo-svc"},
-                    spec: {type: "ClusterIP", selector: {foo: "foo"}},
+                    metadata: { name: "foo-svc" },
+                    spec: { type: "ClusterIP", selector: { foo: "foo" } },
                 },
                 {
-                    metadata: {name: "bar-svc"},
-                    spec: {type: "ClusterIP", selector: {foo: "bar"}},
+                    metadata: { name: "bar-svc" },
+                    spec: { type: "ClusterIP", selector: { foo: "bar" } },
                 },
             ],
         };
 
         test("should delete many services by label selector", async () => {
-            scope.get("/api/v1/namespaces/test/services").query({labelSelector: "spaces.de/test=foo"}).reply(200, serviceListData);
+            scope
+                .get("/api/v1/namespaces/test/services")
+                .query({ labelSelector: "spaces.de/test=foo" })
+                .reply(200, serviceListData);
             scope.delete("/api/v1/namespaces/test/services/foo-svc").reply(200);
             scope.delete("/api/v1/namespaces/test/services/bar-svc").reply(200);
 
-            await api.services().namespace("test").deleteMany({labelSelector: {"spaces.de/test": "foo"}});
+            await api
+                .services()
+                .namespace("test")
+                .deleteMany({ labelSelector: { "spaces.de/test": "foo" } });
             expect(scope.isDone()).toBeTruthy();
         });
-
     });
 });

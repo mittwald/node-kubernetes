@@ -1,6 +1,6 @@
-import {ObjectMeta} from "../../meta/v1";
-import {Subject} from "./subject";
-import {RoleRef} from "./roleref";
+import { ObjectMeta } from "../../meta/v1";
+import { Subject } from "./subject";
+import { RoleRef } from "./roleref";
 
 export interface RoleBinding {
     metadata: ObjectMeta;

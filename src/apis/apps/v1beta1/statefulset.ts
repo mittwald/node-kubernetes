@@ -1,12 +1,11 @@
-import {NamespacedResourceClient} from "../../../resource";
-import {IKubernetesRESTClient, MandatorySelectorOptions} from "../../../client";
-import {StatefulSet} from "../../../types/apps/v1beta1";
-import {DeleteOptions} from "../../../types/meta/v1";
-import {Registry} from "prom-client";
+import { NamespacedResourceClient } from "../../../resource";
+import { IKubernetesRESTClient, MandatorySelectorOptions } from "../../../client";
+import { StatefulSet } from "../../../types/apps/v1beta1";
+import { DeleteOptions } from "../../../types/meta/v1";
+import { Registry } from "prom-client";
 import * as _ from "lodash";
 
 export class StatefulSetResourceClient extends NamespacedResourceClient<StatefulSet, "StatefulSet", "apps/v1beta1"> {
-
     public constructor(protected client: IKubernetesRESTClient, registry: Registry) {
         super(client, "/apis/apps/v1beta1", "/statefulsets", registry);
     }
@@ -23,6 +22,6 @@ export class StatefulSetResourceClient extends NamespacedResourceClient<Stateful
         const resources = await this.list(opts);
         const subOpts = _.omit(opts, "labelSelector", "fieldSelector");
 
-        await Promise.all(resources.map(r => this.delete(r, subOpts)));
+        await Promise.all(resources.map((r) => this.delete(r, subOpts)));
     }
 }

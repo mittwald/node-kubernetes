@@ -1,4 +1,4 @@
-import {INamespacedResourceClient, IResourceClient} from "../resource";
+import { INamespacedResourceClient, IResourceClient } from "../resource";
 import * as corev1 from "../types/core/v1";
 
 export interface CoreV1API {

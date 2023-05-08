@@ -14,9 +14,9 @@ export interface Selector {
 export function selectorToString(selector: Selector, separator = ";"): string {
     const parts = Object.entries(selector).map(([label, value]) => {
         if (typeof value === "string") {
-            return (label + "=" + value);
+            return label + "=" + value;
         }
-        return (label + " " + value.operator + " (" + value.values.join(",") + ")");
+        return label + " " + value.operator + " (" + value.values.join(",") + ")";
     });
 
     return parts.join(separator);
@@ -24,7 +24,7 @@ export function selectorToString(selector: Selector, separator = ";"): string {
 
 export const selectorToQueryString = (selector: Selector) => selectorToString(selector, ",");
 
-const setBasedSelectorRegex = new RegExp("([^\(\) ]*) +(in|notin) +\\((.*)\\)", "i");
+const setBasedSelectorRegex = new RegExp("([^() ]*) +(in|notin) +\\((.*)\\)", "i");
 
 /**
  * Parse a Label Selector string to a Selector Object.
@@ -45,7 +45,10 @@ export function parseLabelSelector(input: string): Selector {
         } else {
             const [key, operator, ...values] = item.split(/(=|!=|==)/);
             const trimmedValues = values.map((v) => v.trim());
-            selector[key.trim()] = operator === "=" ? trimmedValues.join('') : { operator: operator as EqualityBasedOperator, values: trimmedValues };
+            selector[key.trim()] =
+                operator === "="
+                    ? trimmedValues.join("")
+                    : { operator: operator as EqualityBasedOperator, values: trimmedValues };
         }
     }
 
